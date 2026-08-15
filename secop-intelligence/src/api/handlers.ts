@@ -1,0 +1,92 @@
+import type { Request, Response } from 'express';
+import { runMonitoring } from '../modules/monitoring.js';
+import { analyzeCompetitor } from '../modules/competitive.js';
+import { trackContract, trackContractWithSanctions } from '../modules/tracking.js';
+import { opportunitiesToCsv } from '../utils/csv-export.js';
+import { croma } from '../croma/client.js';
+import { config, entities, competitors } from '../config.js';
+
+function fail(res: Response, err: unknown): void {
+  const status = (err as { status?: number }).status ?? 500;
+  res.status(status >= 400 && status < 600 ? status : 500).json({
+    error: err instanceof Error ? err.message : 'Error desconocido',
+  });
+}
+
+export async function getHealth(_req: Request, res: Response): Promise<void> {
+  res.json({
+    ok: true,
+    croma_key_configured: croma.hasKey,
+    base_url: config.cromaBaseUrl,
+    entities: entities.length,
+    competitors: competitors.length,
+  });
+}
+
+export async function getOpportunities(req: Request, res: Response): Promise<void> {
+  try {
+    const entityNits = parseList(req.query.entity_nits);
+    const run = await runMonitoring({
+      entityNits,
+      fromDate: str(req.query.from_date),
+      limit: num(req.query.limit) ?? 20,
+      minScore: num(req.query.min_score),
+    });
+
+    if (str(req.query.format) === 'csv') {
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="opportunities.csv"');
+      res.send(opportunitiesToCsv(run.opportunities));
+      return;
+    }
+    res.json({
+      timestamp: run.timestamp,
+      total_processed: run.total_processed,
+      total_filtered: run.total_prefiltered,
+      detail_lookups: run.detail_lookups,
+      total_count: run.opportunities.length,
+      opportunities: run.opportunities,
+    });
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
+export async function postCompetitorAnalysis(req: Request, res: Response): Promise<void> {
+  try {
+    const nit = String(req.body?.competitor_nit ?? '').trim();
+    if (!nit) {
+      res.status(400).json({ error: 'competitor_nit es obligatorio' });
+      return;
+    }
+    const period = req.body?.period ?? {};
+    const analysis = await analyzeCompetitor(nit, { fromDate: period.from_date, toDate: period.to_date });
+    res.json(analysis);
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
+export async function getContractTracking(req: Request, res: Response): Promise<void> {
+  try {
+    const id = req.params.contract_id;
+    const providerDoc = str(req.query.provider_document);
+    const tracking = providerDoc ? await trackContractWithSanctions(id, providerDoc) : await trackContract(id);
+    res.json(tracking);
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
+// --- helpers de parseo de query --------------------------------------------
+function str(v: unknown): string {
+  return typeof v === 'string' ? v : '';
+}
+function num(v: unknown): number | undefined {
+  const n = Number(v);
+  return Number.isFinite(n) && v !== '' && v !== undefined ? n : undefined;
+}
+function parseList(v: unknown): string[] | undefined {
+  if (typeof v !== 'string' || !v) return undefined;
+  return v.split(',').map((s) => s.trim()).filter(Boolean);
+}

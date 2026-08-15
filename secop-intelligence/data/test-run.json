@@ -1,0 +1,131 @@
+{
+  "_note": "Demo del motor de clasificación/scoring/alertas. Objetos representativos de SECOP + 1 registro REAL de Croma (CO1.NTC.10710152, correctamente filtrado como UNKNOWN). La conectividad en vivo con Croma se probó por separado: 1.869 procesos reales de la UdeA recuperados el 2026-08-15.",
+  "timestamp": "2026-08-15T22:48:23.540Z",
+  "total_processed": 6,
+  "filtered_unknown": 1,
+  "total_count": 5,
+  "opportunities": [
+    {
+      "notice_uid": "CO1.NTC.DEMO001",
+      "entity_name": "Gobernación de Antioquia",
+      "entity_nit": "890900286",
+      "object": "Adquisición de 3 camionetas eléctricas doble cabina para el parque automotor institucional, cero emisiones",
+      "estimated_value": 450000000,
+      "publication_date": "2026-08-15",
+      "closing_date": "2026-08-25",
+      "days_to_close": 10,
+      "foton_line": "NEW_ENERGY_PICKUP",
+      "line_confidence": 0.95,
+      "scoring": {
+        "value_score": 27,
+        "urgency_score": 20,
+        "entity_score": 25,
+        "confidence_score": 14.25,
+        "total": 86.25
+      },
+      "alerts": [
+        "high_value",
+        "urgent_close",
+        "repeated_buyer",
+        "new_energy_segment"
+      ],
+      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO001"
+    },
+    {
+      "notice_uid": "CO1.NTC.DEMO002",
+      "entity_name": "Municipio de Medellín",
+      "entity_nit": "890905211",
+      "object": "Suministro de 5 camionetas pick-up 4x4 diésel doble cabina para la Secretaría de Movilidad",
+      "estimated_value": 520000000,
+      "publication_date": "2026-08-15",
+      "closing_date": "2026-09-24",
+      "days_to_close": 40,
+      "foton_line": "PICKUP",
+      "line_confidence": 0.9,
+      "scoring": {
+        "value_score": 30,
+        "urgency_score": 10,
+        "entity_score": 25,
+        "confidence_score": 13.5,
+        "total": 78.5
+      },
+      "alerts": [
+        "high_value",
+        "repeated_buyer"
+      ],
+      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO002"
+    },
+    {
+      "notice_uid": "CO1.NTC.DEMO003",
+      "entity_name": "EPM",
+      "entity_nit": "890904996",
+      "object": "Compraventa de camioneta híbrida (MHEV) para supervisión de redes de energía",
+      "estimated_value": 180000000,
+      "publication_date": "2026-08-15",
+      "closing_date": "2026-08-27",
+      "days_to_close": 12,
+      "foton_line": "PICKUP_MHEV",
+      "line_confidence": 0.93,
+      "scoring": {
+        "value_score": 10.8,
+        "urgency_score": 20,
+        "entity_score": 15,
+        "confidence_score": 13.95,
+        "total": 59.75
+      },
+      "alerts": [
+        "urgent_close",
+        "repeated_buyer",
+        "pickup_mhev"
+      ],
+      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO003"
+    },
+    {
+      "notice_uid": "CO1.NTC.DEMO005",
+      "entity_name": "Secretaría de Salud",
+      "entity_nit": "890981536",
+      "object": "Suministro de furgón medicalizado y microbús para transporte de pacientes",
+      "estimated_value": 240000000,
+      "publication_date": "2026-08-15",
+      "closing_date": "2026-09-02",
+      "days_to_close": 18,
+      "foton_line": "AUV_VAN",
+      "line_confidence": 0.83,
+      "scoring": {
+        "value_score": 14.4,
+        "urgency_score": 15,
+        "entity_score": 15,
+        "confidence_score": 12.45,
+        "total": 56.85
+      },
+      "alerts": [
+        "high_value",
+        "repeated_buyer"
+      ],
+      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO005"
+    },
+    {
+      "notice_uid": "CO1.NTC.DEMO004",
+      "entity_name": "Área Metropolitana",
+      "entity_nit": "890984423",
+      "object": "Adquisición de camión de estacas y volqueta para transporte de carga y residuos",
+      "estimated_value": 380000000,
+      "publication_date": "2026-08-15",
+      "closing_date": "2026-09-09",
+      "days_to_close": 25,
+      "foton_line": "LDT",
+      "line_confidence": 0.86,
+      "scoring": {
+        "value_score": 22.8,
+        "urgency_score": 15,
+        "entity_score": 5,
+        "confidence_score": 12.9,
+        "total": 55.7
+      },
+      "alerts": [
+        "high_value"
+      ],
+      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO004"
+    }
+  ]
+}

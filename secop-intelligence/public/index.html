@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SECOP Intelligence · Foton × Croma</title>
+  <style>
+    :root { --bg:#0b1020; --card:#151b30; --ink:#e8ecf5; --mut:#93a0bd; --acc:#3ea6ff; --hi:#ff5d5d; --ok:#33d69f; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+    header { padding:20px 28px; border-bottom:1px solid #23304f; display:flex; align-items:center; gap:14px; }
+    header h1 { font-size:19px; margin:0; }
+    header .tag { color:var(--mut); font-size:13px; }
+    .bar { padding:16px 28px; display:flex; gap:12px; flex-wrap:wrap; align-items:end; }
+    label { display:block; font-size:12px; color:var(--mut); margin-bottom:4px; }
+    input, button { background:var(--card); border:1px solid #2a3557; color:var(--ink); border-radius:8px; padding:9px 12px; font-size:14px; }
+    button { cursor:pointer; background:var(--acc); border-color:var(--acc); color:#04121f; font-weight:600; }
+    button:disabled { opacity:.5; cursor:wait; }
+    main { padding:8px 28px 40px; }
+    .meta { color:var(--mut); font-size:13px; margin:8px 0 16px; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { text-align:left; padding:10px 12px; border-bottom:1px solid #202a45; font-size:13.5px; vertical-align:top; }
+    th { color:var(--mut); font-weight:600; position:sticky; top:0; background:var(--bg); }
+    .score { font-weight:700; }
+    .s-hi { color:var(--ok); } .s-md { color:#e8c33e; } .s-lo { color:var(--mut); }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; background:#22304f; color:var(--acc); margin:1px 3px 1px 0; }
+    .pill.hi { background:#3a1c22; color:var(--hi); }
+    .line { font-weight:600; color:var(--acc); }
+    a { color:var(--acc); }
+    .empty { color:var(--mut); padding:30px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🚗 SECOP Intelligence</h1>
+    <span class="tag">Oportunidades de compra pública · Foton Colombia × Croma</span>
+  </header>
+
+  <div class="bar">
+    <div>
+      <label>NITs de entidades (coma)</label>
+      <input id="nits" size="34" placeholder="890980040,890905211 (vacío = config)" />
+    </div>
+    <div>
+      <label>Desde (yyyy-mm-dd)</label>
+      <input id="from" size="12" placeholder="hoy-7d" />
+    </div>
+    <div>
+      <label>Límite</label>
+      <input id="limit" size="5" value="20" />
+    </div>
+    <button id="go">Buscar oportunidades</button>
+    <button id="csv">Exportar CSV</button>
+  </div>
+
+  <main>
+    <div class="meta" id="meta">Configura filtros y pulsa <b>Buscar</b>. (Requiere CROMA_API_KEY en el servidor.)</div>
+    <table>
+      <thead>
+        <tr><th>Score</th><th>Línea</th><th>Entidad</th><th>Objeto</th><th>Valor est.</th><th>Cierre</th><th>Alertas</th><th></th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">Sin resultados para esos filtros.</div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const cop = (n) => n == null ? '—' : new Intl.NumberFormat('es-CO', { style:'currency', currency:'COP', maximumFractionDigits:0 }).format(n);
+    const scoreClass = (s) => s >= 70 ? 's-hi' : s >= 50 ? 's-md' : 's-lo';
+
+    function qs() {
+      const p = new URLSearchParams();
+      if ($('nits').value.trim()) p.set('entity_nits', $('nits').value.trim());
+      if ($('from').value.trim()) p.set('from_date', $('from').value.trim());
+      if ($('limit').value.trim()) p.set('limit', $('limit').value.trim());
+      return p.toString();
+    }
+
+    async function load() {
+      $('go').disabled = true; $('meta').textContent = 'Consultando Croma…'; $('rows').innerHTML = '';
+      try {
+        const r = await fetch('/api/opportunities?' + qs());
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Error');
+        $('meta').innerHTML = `Procesados <b>${d.total_processed}</b> · pre-filtrados <b>${d.total_filtered}</b> · detalles <b>${d.detail_lookups}</b> · oportunidades <b>${d.total_count}</b> · ${new Date(d.timestamp).toLocaleString('es-CO')}`;
+        $('empty').style.display = d.opportunities.length ? 'none' : 'block';
+        $('rows').innerHTML = d.opportunities.map((o) => `
+          <tr>
+            <td class="score ${scoreClass(o.scoring.total)}">${o.scoring.total.toFixed(1)}</td>
+            <td class="line">${o.foton_line}<br><span style="color:var(--mut);font-size:11px">${Math.round(o.line_confidence*100)}%</span></td>
+            <td>${o.entity_name ?? '—'}<br><span style="color:var(--mut);font-size:11px">${o.entity_nit ?? ''}</span></td>
+            <td>${(o.object || '').slice(0,120)}</td>
+            <td>${cop(o.estimated_value)}</td>
+            <td>${o.closing_date ?? '—'}${o.days_to_close!=null?`<br><span style="color:var(--mut);font-size:11px">${o.days_to_close} d</span>`:''}</td>
+            <td>${o.alerts.map((a)=>`<span class="pill ${['high_value','urgent_close','new_energy_segment'].includes(a)?'hi':''}">${a}</span>`).join('')}</td>
+            <td>${o.secop_link?`<a href="${o.secop_link}" target="_blank">SECOP↗</a>`:''}</td>
+          </tr>`).join('');
+      } catch (e) {
+        $('meta').textContent = '⚠️ ' + e.message;
+      } finally {
+        $('go').disabled = false;
+      }
+    }
+
+    $('go').onclick = load;
+    $('csv').onclick = () => window.open('/api/opportunities?format=csv&' + qs(), '_blank');
+  </script>
+</body>
+</html>

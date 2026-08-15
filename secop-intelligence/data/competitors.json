@@ -1,0 +1,8 @@
+{
+  "_nota": "NITs de EJEMPLO de competidores. Verificar antes de producción con RUES/Croma.",
+  "competitors": [
+    { "nit": "860001100", "name": "Toyota (verificar NIT)", "market_share": "high" },
+    { "nit": "900406621", "name": "Renault Colombia (verificar NIT)", "market_share": "high" },
+    { "nit": "830002190", "name": "Chevrolet / GM Colombia (verificar NIT)", "market_share": "medium" }
+  ]
+}

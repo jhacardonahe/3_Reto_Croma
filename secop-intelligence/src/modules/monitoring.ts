@@ -1,0 +1,126 @@
+import { croma } from '../croma/client.js';
+import { entities as configuredEntities, type EntityConfig } from '../config.js';
+import { classifyFotonLine, passesGeneralFilter } from './classification.js';
+import { evaluateAlerts } from './alerting.js';
+import { calculateOpportunityScore } from '../utils/scoring.js';
+import { daysUntil, daysAgo } from '../utils/date.js';
+import type { OpportunityResult, ProcessSummary } from '../types.js';
+
+export interface MonitorOptions {
+  entityNits?: string[]; // por defecto: las de config
+  fromDate?: string; // por defecto: hoy - 7 días
+  toDate?: string;
+  limit?: number; // top N a devolver (default 50)
+  minScore?: number; // umbral (default 40)
+  maxDetailLookups?: number; // tope de llamadas de detalle por corrida (control de costo)
+}
+
+export interface MonitorRun {
+  timestamp: string;
+  from_date: string;
+  entities_scanned: number;
+  total_processed: number;
+  total_prefiltered: number;
+  detail_lookups: number;
+  opportunities: OpportunityResult[];
+}
+
+/**
+ * Corrida de monitoreo end-to-end (brief §10).
+ * 1) lista procesos por entidad, 2) pre-filtro barato por texto del resumen,
+ * 3) detalle de los candidatos (para descripción + fecha de cierre),
+ * 4) clasifica a línea Foton, 5) puntúa, 6) alertas, 7) top-N ordenado.
+ */
+export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorRun> {
+  const fromDate = opts.fromDate ?? daysAgo(7);
+  const toDate = opts.toDate ?? '';
+  const limit = opts.limit ?? 50;
+  const minScore = opts.minScore ?? 40;
+  const maxDetail = opts.maxDetailLookups ?? 60;
+
+  const targets: EntityConfig[] = opts.entityNits?.length
+    ? opts.entityNits.map((nit) => configuredEntities.find((e) => e.nit === nit) ?? { nit, name: nit, type: 'unknown', priority: 'medium' as const })
+    : configuredEntities;
+
+  let totalProcessed = 0;
+  let detailLookups = 0;
+  const candidates: { summary: ProcessSummary; entity: EntityConfig; frequency: number }[] = [];
+
+  for (const entity of targets) {
+    const res = await croma.processesByEntity(entity.nit, fromDate, toDate);
+    totalProcessed += res.processes.length;
+
+    // frecuencia = # de procesos relevantes de la entidad en la ventana (proxy de "comprador recurrente")
+    const relevant = res.processes.filter((p) => passesGeneralFilter(summaryText(p)));
+    for (const p of relevant) candidates.push({ summary: p, entity, frequency: relevant.length });
+  }
+
+  const opportunities: OpportunityResult[] = [];
+  for (const cand of candidates) {
+    if (detailLookups >= maxDetail) break;
+
+    // Detalle para obtener descripción + fecha de cierre (el resumen no las trae).
+    const detail = await croma.process(cand.summary.notice_uid);
+    detailLookups++;
+    const header = detail.found ? detail.process : null;
+
+    const object =
+      header?.description ??
+      cand.summary.name ??
+      `${cand.summary.contract_type ?? ''} ${cand.summary.reference ?? ''}`.trim();
+
+    const classification = classifyFotonLine(`${object} ${cand.summary.contract_type ?? ''}`);
+    if (classification.line === 'UNKNOWN') continue;
+
+    const estimatedValue = header?.base_price ?? cand.summary.base_price ?? null;
+    const closingDate = header?.bid_deadline ?? null;
+    const daysToClose = daysUntil(closingDate);
+
+    const scoring = calculateOpportunityScore({
+      estimatedValue,
+      daysToClose,
+      entityPurchaseFrequency: cand.frequency,
+      classification,
+    });
+    if (scoring.total < minScore) continue;
+
+    const opp: OpportunityResult = {
+      notice_uid: cand.summary.notice_uid,
+      entity_name: cand.summary.entity ?? cand.entity.name,
+      entity_nit: cand.summary.entity_nit ?? cand.entity.nit,
+      object,
+      estimated_value: estimatedValue,
+      publication_date: cand.summary.published_date ?? header?.published_date ?? null,
+      closing_date: closingDate,
+      days_to_close: daysToClose,
+      foton_line: classification.line,
+      line_confidence: classification.confidence,
+      scoring,
+      alerts: [],
+      secop_link: cand.summary.url ?? header?.url ?? null,
+    };
+    opp.alerts = evaluateAlerts(opp);
+    opportunities.push(opp);
+  }
+
+  opportunities.sort(
+    (a, b) =>
+      b.scoring.total - a.scoring.total ||
+      (b.estimated_value ?? 0) - (a.estimated_value ?? 0) ||
+      (a.days_to_close ?? Infinity) - (b.days_to_close ?? Infinity),
+  );
+
+  return {
+    timestamp: new Date().toISOString(),
+    from_date: fromDate,
+    entities_scanned: targets.length,
+    total_processed: totalProcessed,
+    total_prefiltered: candidates.length,
+    detail_lookups: detailLookups,
+    opportunities: opportunities.slice(0, limit),
+  };
+}
+
+function summaryText(p: ProcessSummary): string {
+  return [p.name, p.reference, p.contract_type, p.modality].filter(Boolean).join(' ');
+}

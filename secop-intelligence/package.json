@@ -1,0 +1,28 @@
+{
+  "name": "secop-intelligence",
+  "version": "0.1.0",
+  "description": "Sistema de Inteligencia de Oportunidades SECOP para Foton Colombia — reto IA-Hackathon GOV-TECH de Croma",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "monitor": "tsx src/cli/monitor.ts",
+    "demo": "tsx src/cli/demo.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

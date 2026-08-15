@@ -1,0 +1,9 @@
+{
+  "_nota": "NITs de EJEMPLO. Verificar cada uno antes de producción — el brief traía mapeos equivocados. 890980040 = UNIVERSIDAD DE ANTIOQUIA (confirmado en vivo, comprador de alto volumen), NO el Municipio de Medellín.",
+  "entities": [
+    { "nit": "890980040", "name": "Universidad de Antioquia", "type": "public_entity", "priority": "high" },
+    { "nit": "890905211", "name": "Municipio de Medellín (verificar NIT)", "type": "municipality", "priority": "high" },
+    { "nit": "890900286", "name": "Gobernación de Antioquia (verificar NIT)", "type": "department", "priority": "high" },
+    { "nit": "890904996", "name": "EPM - Empresas Públicas de Medellín (verificar NIT)", "type": "public_company", "priority": "medium" }
+  ]
+}
