@@ -36,8 +36,16 @@ export const config = {
 export const entities: EntityConfig[] = loadJson<{ entities: EntityConfig[] }>('entities.json').entities;
 export const competitors: CompetitorConfig[] = loadJson<{ competitors: CompetitorConfig[] }>('competitors.json').competitors;
 
-// Pre-filtro: si el texto del proceso no contiene NINGUNA de estas, se descarta barato
-// (antes de gastar una llamada de detalle a Croma).
+// Pre-filtro a nivel de RESUMEN (barato, sin gastar detalle): los vehículos se compran
+// como bienes ("Compraventa"/"Suministros"), nunca como "Prestación de servicios".
+// Verificado con data real (UdeA: 320/500 eran servicios → se descartan).
+export const GOODS_CONTRACT_TYPES: string[] = ['compraventa', 'suministro', 'suministros', 'otro'];
+
+// Piso de precio para considerar un proceso como posible compra de vehículo (COP).
+// Un vehículo institucional rara vez baja de ~30M; filtra papelería/insumos baratos.
+export const MIN_VEHICLE_PRICE = 30_000_000;
+
+// Pre-filtro de texto (se usa sobre la DESCRIPCIÓN del detalle, no sobre el resumen).
 export const GENERAL_FILTER: string[] = [
   'camioneta', 'pick-up', 'pickup', 'vehículo', 'vehiculo', 'vehículos', 'vehiculos',
   'automotor', 'automóvil', 'automovil', 'camión', 'camion', 'transporte', 'suv',

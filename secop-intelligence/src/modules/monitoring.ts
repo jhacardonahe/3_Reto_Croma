@@ -1,6 +1,6 @@
 import { croma } from '../croma/client.js';
-import { entities as configuredEntities, type EntityConfig } from '../config.js';
-import { classifyFotonLine, passesGeneralFilter } from './classification.js';
+import { entities as configuredEntities, type EntityConfig, GOODS_CONTRACT_TYPES, MIN_VEHICLE_PRICE } from '../config.js';
+import { classifyFotonLine } from './classification.js';
 import { evaluateAlerts } from './alerting.js';
 import { calculateOpportunityScore } from '../utils/scoring.js';
 import { daysUntil, daysAgo } from '../utils/date.js';
@@ -22,6 +22,7 @@ export interface MonitorRun {
   total_processed: number;
   total_prefiltered: number;
   detail_lookups: number;
+  failed_lookups: number;
   opportunities: OpportunityResult[];
 }
 
@@ -44,6 +45,7 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
 
   let totalProcessed = 0;
   let detailLookups = 0;
+  let failedLookups = 0;
   const candidates: { summary: ProcessSummary; entity: EntityConfig; frequency: number }[] = [];
 
   for (const entity of targets) {
@@ -51,7 +53,7 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
     totalProcessed += res.processes.length;
 
     // frecuencia = # de procesos relevantes de la entidad en la ventana (proxy de "comprador recurrente")
-    const relevant = res.processes.filter((p) => passesGeneralFilter(summaryText(p)));
+    const relevant = res.processes.filter(isCandidateVehicleProcess);
     for (const p of relevant) candidates.push({ summary: p, entity, frequency: relevant.length });
   }
 
@@ -60,9 +62,16 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
     if (detailLookups >= maxDetail) break;
 
     // Detalle para obtener descripción + fecha de cierre (el resumen no las trae).
-    const detail = await croma.process(cand.summary.notice_uid);
+    // Un fallo puntual de Croma (502/timeout) no debe abortar toda la corrida: se salta.
     detailLookups++;
-    const header = detail.found ? detail.process : null;
+    let header: Awaited<ReturnType<typeof croma.process>>['process'] = null;
+    try {
+      const detail = await croma.process(cand.summary.notice_uid);
+      header = detail.found ? detail.process : null;
+    } catch (err) {
+      failedLookups++;
+      continue;
+    }
 
     const object =
       header?.description ??
@@ -117,10 +126,20 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
     total_processed: totalProcessed,
     total_prefiltered: candidates.length,
     detail_lookups: detailLookups,
+    failed_lookups: failedLookups,
     opportunities: opportunities.slice(0, limit),
   };
 }
 
-function summaryText(p: ProcessSummary): string {
-  return [p.name, p.reference, p.contract_type, p.modality].filter(Boolean).join(' ');
+/**
+ * Pre-filtro barato a nivel de resumen: ¿este proceso PODRÍA ser una compra de vehículo?
+ * El resumen no trae descripción, así que filtramos por tipo de contrato (bienes) y precio.
+ * Los descartados aquí no gastan una llamada de detalle a Croma.
+ */
+function isCandidateVehicleProcess(p: ProcessSummary): boolean {
+  if (!p.notice_uid) return false; // algunos procesos de SECOP vienen sin noticeUID → no se pueden detallar
+  const type = (p.contract_type ?? '').toLowerCase();
+  const isGoods = GOODS_CONTRACT_TYPES.some((t) => type.includes(t));
+  const priceOk = (p.base_price ?? 0) >= MIN_VEHICLE_PRICE;
+  return isGoods && priceOk;
 }

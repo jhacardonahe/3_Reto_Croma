@@ -24,7 +24,7 @@ async function main(): Promise<void> {
   console.log(`Entidades escaneadas : ${run.entities_scanned}`);
   console.log(`Procesos vistos      : ${run.total_processed}`);
   console.log(`Pre-filtrados        : ${run.total_prefiltered}`);
-  console.log(`Llamadas de detalle  : ${run.detail_lookups}`);
+  console.log(`Llamadas de detalle  : ${run.detail_lookups} (fallidas: ${run.failed_lookups})`);
   console.log(`Oportunidades (top)  : ${run.opportunities.length}`);
   console.log(`\nGuardado en: ${out}`);
   for (const o of run.opportunities.slice(0, 10)) {

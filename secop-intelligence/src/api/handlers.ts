@@ -44,6 +44,7 @@ export async function getOpportunities(req: Request, res: Response): Promise<voi
       total_processed: run.total_processed,
       total_filtered: run.total_prefiltered,
       detail_lookups: run.detail_lookups,
+      failed_lookups: run.failed_lookups,
       total_count: run.opportunities.length,
       opportunities: run.opportunities,
     });
