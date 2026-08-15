@@ -1,0 +1,4 @@
+# Artefactos de Windows / antivirus (alternate data streams en WSL)
+*:Sangfor.Identifier
+*Zone.Identifier
+.DS_Store
