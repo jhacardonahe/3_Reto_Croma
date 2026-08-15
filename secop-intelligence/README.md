@@ -32,7 +32,7 @@ npm install
 cp .env.example .env         # y pega tu CROMA_API_KEY (usecroma.com → Get API key)
 
 npm run demo                 # motor end-to-end SIN key → genera data/test-run.json
-npm run dev                  # servidor + dashboard en http://localhost:8095
+npm run dev                  # servidor + dashboard en http://localhost:8096
 npm run monitor -- --from 2026-08-01 --limit 50   # corrida CLI, guarda data/cache/opportunities.json
 ```
 
@@ -53,11 +53,11 @@ npm run monitor -- --from 2026-08-01 --limit 50   # corrida CLI, guarda data/cac
 Ejemplos:
 
 ```bash
-curl "http://localhost:8095/api/opportunities?entity_nits=890980040&from_date=2026-06-01&limit=20"
-curl "http://localhost:8095/api/opportunities?format=csv&from_date=2026-06-01" -o oportunidades.csv
-curl -X POST http://localhost:8095/api/competitor-analysis \
+curl "http://localhost:8096/api/opportunities?entity_nits=890980040&from_date=2026-06-01&limit=20"
+curl "http://localhost:8096/api/opportunities?format=csv&from_date=2026-06-01" -o oportunidades.csv
+curl -X POST http://localhost:8096/api/competitor-analysis \
   -H "Content-Type: application/json" -d '{"competitor_nit":"860001100"}'
-curl "http://localhost:8095/api/contracts/CO1.PCCNTR.6794799/tracking"
+curl "http://localhost:8096/api/contracts/CO1.PCCNTR.6794799/tracking"
 ```
 
 El **dashboard** (raíz `/`) permite filtrar por NITs/fecha, ver el score, la línea Foton,

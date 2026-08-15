@@ -27,7 +27,7 @@ function loadJson<T>(file: string): T {
 export const config = {
   cromaApiKey: process.env.CROMA_API_KEY ?? '',
   cromaBaseUrl: process.env.CROMA_BASE_URL ?? 'https://api.croma.run',
-  port: Number(process.env.PORT ?? 8095),
+  port: Number(process.env.PORT ?? 8096),
   maxCallsPerMin: Number(process.env.CROMA_MAX_CALLS_PER_MIN ?? 10),
   cacheTtlHours: Number(process.env.CACHE_TTL_HOURS ?? 6),
   cacheDir: resolve(dataDir, 'cache'),
