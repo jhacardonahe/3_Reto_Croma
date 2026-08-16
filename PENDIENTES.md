@@ -177,7 +177,8 @@ Documento-norte del reto: `RETO.md`
       capitales y otras gobernaciones con `secop_processes_by_entity` (filtro: `contract_type`∈bienes +
       nombre vehículo + precio≥30M + estado adjudicado) antes de cargar. **Ojo:** subir `maxDetail`/`perEntity`
       en proporción al nº de entidades, o el barrido de mercado se reparte muy fino.
-      ⚠️ Requiere **redeploy** (`deploy-vps.sh`, con tu llave SSH) para que producción tome los NITs nuevos.
+      ✅ **DESPLEGADO 2026-08-16**: `deploy-vps.sh` corrido; health remoto reporta `entities:5`, servicio
+      `active`+`enabled`, HTTPS OK. Cundinamarca + la paralelización YA están en producción.
 
 - [ ] **Conseguir 3–5 NITs de entidades que SÍ compran vehículos** y verificarlos con Croma
       (`secop_processes_by_entity`). Candidatos: gobernaciones, alcaldías grandes, Policía Nacional,
