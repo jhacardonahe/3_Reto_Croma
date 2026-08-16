@@ -1,9 +1,41 @@
 {
-  "_nota": "NITs de EJEMPLO. Verificar cada uno antes de producción — el brief traía mapeos equivocados. 890980040 = UNIVERSIDAD DE ANTIOQUIA (confirmado en vivo, comprador de alto volumen), NO el Municipio de Medellín.",
+  "_nota": "NITs VERIFICADOS en vivo contra Croma (secop_processes_by_entity, ventana 12m, 2026-08-15). Cada 'entity' es el nombre tal como lo devuelve SECOP. UdeA (890980040) retirada: es compradora de SERVICIOS, no de vehículos (0 adquisiciones de camionetas).",
   "entities": [
-    { "nit": "890980040", "name": "Universidad de Antioquia", "type": "public_entity", "priority": "high" },
-    { "nit": "890905211", "name": "Municipio de Medellín (verificar NIT)", "type": "municipality", "priority": "high" },
-    { "nit": "890900286", "name": "Gobernación de Antioquia (verificar NIT)", "type": "department", "priority": "high" },
-    { "nit": "890904996", "name": "EPM - Empresas Públicas de Medellín (verificar NIT)", "type": "public_company", "priority": "medium" }
+    {
+      "nit": "800141397",
+      "name": "DILOF — Dirección de Logística, Policía Nacional",
+      "type": "public_entity",
+      "priority": "high",
+      "verified": true,
+      "verified_at": "2026-08-15",
+      "note": "28 procesos de vehículos en 12m: CAMIONETAS SUV HÍBRIDA uniformada, 4x4 blindadas. Mapea directo a PICKUP_MHEV / NEW_ENERGY. Comprador estrella."
+    },
+    {
+      "nit": "890900286",
+      "name": "Asamblea / Departamento de Antioquia",
+      "type": "department",
+      "priority": "high",
+      "verified": true,
+      "verified_at": "2026-08-15",
+      "note": "9 procesos de vehículos: 'VEHÍCULOS ESPECIALIZADOS' $9.6B, recolectores/compactadores $16B. Comprador de alto ticket."
+    },
+    {
+      "nit": "800215807",
+      "name": "INVÍAS — Instituto Nacional de Vías",
+      "type": "public_entity",
+      "priority": "medium",
+      "verified": true,
+      "verified_at": "2026-08-15",
+      "note": "15 matches; mezcla adquisición (SOAT, parque automotor) con servicios de mantenimiento. Comprador de flota real."
+    },
+    {
+      "nit": "890905211",
+      "name": "Distrito de Ciencia, Tecnología e Innovación de Medellín",
+      "type": "municipality",
+      "priority": "medium",
+      "verified": true,
+      "verified_at": "2026-08-15",
+      "note": "15 matches; predominan mantenimiento y administración delegada del parque automotor. Menor volumen de adquisición pura."
+    }
   ]
 }

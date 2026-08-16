@@ -1,0 +1,18 @@
+[Unit]
+Description=SECOP Intelligence (Foton x Croma)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/secop-intelligence
+EnvironmentFile=/opt/secop-intelligence/.env
+ExecStart=/usr/bin/node /opt/secop-intelligence/dist/index.js
+Restart=on-failure
+RestartSec=3
+# Endurecimiento básico
+NoNewPrivileges=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

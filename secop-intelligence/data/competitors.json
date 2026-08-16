@@ -1,8 +1,22 @@
 {
-  "_nota": "NITs de EJEMPLO de competidores. Verificar antes de producción con RUES/Croma.",
+  "_nota": "NITs de competidores VERIFICADOS: extraídos de contratos SECOP REALES ya adjudicados (secop_process CO1.NTC.10277390 → secop_contracts_by_provider), no de listas de ejemplo. Método §8: derivar del adjudicatario real, nunca adivinar el NIT.",
   "competitors": [
-    { "nit": "860001100", "name": "Toyota (verificar NIT)", "market_share": "high" },
-    { "nit": "900406621", "name": "Renault Colombia (verificar NIT)", "market_share": "high" },
-    { "nit": "830002190", "name": "Chevrolet / GM Colombia (verificar NIT)", "market_share": "medium" }
-  ]
+    {
+      "nit": "860034604",
+      "name": "AUTOMAYOR S.A.",
+      "market_share": "high",
+      "verified": true,
+      "verified_at": "2026-08-15",
+      "note": "Distribuidor (línea Chevrolet). 6 contratos de vehículos 2024-2026: DILOF/Policía (pick-up antiexplosivos $623M), Alcaldía Santa Marta (parque automotor GAULA/Fiscalía/Armada/Ejército $1.84B), Min. Defensa, Rama Judicial, Cartagena. Competidor directo en licitaciones de camionetas institucionales."
+    },
+    {
+      "nit": "830096621",
+      "name": "EPIA SAS",
+      "market_share": "medium",
+      "verified": true,
+      "verified_at": "2026-08-15",
+      "note": "PYME de equipo automotor especializado uniformado. Ganó DILOF LOTE 1 vans + LOTE 3 camión necromóvil por $6.18B (CO1.PCCNTR.9546483, jun-2026). Compite en carrozados/uniformados para fuerza pública."
+    }
+  ],
+  "_por_verificar": "Importadores/ensambladores a validar contra Croma si aparecen como adjudicatarios en futuras corridas: Toyota (Distoyota), Renault Colombia, GM/Chevrolet Colmotores, Nissan, Isuzu, Mitsubishi, GWM, JMC."
 }

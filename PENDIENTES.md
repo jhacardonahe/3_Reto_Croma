@@ -28,6 +28,18 @@ Documento-norte del reto: `RETO.md`
 - Pipeline endurecido: pre-filtro por `contract_type`+precio, guarda contra `notice_uid` null, tolerante a 502.
 - Repo público sincronizado. `CLAUDE.md` retirado del repo/historial (guardado local fuera del repo).
 
+### ✅ Cerrado 2026-08-15 (sesión Croma en vivo)
+- **4 NITs de entidades VERIFICADOS** contra Croma y cargados en `data/entities.json`:
+  DILOF/Policía `800141397` (⭐ camionetas SUV híbrida), Antioquia `890900286`, INVÍAS `800215807`,
+  Distrito CT+i Medellín `890905211`. (UdeA retirada: compra servicios, no vehículos.)
+- **Corrida real de monitoreo**: 2000 procesos → 454 pre-filtrados → **3 oportunidades clasificadas**
+  (top: DILOF PICKUP_MHEV, score 68.95).
+- **2 competidores REALES verificados** en `data/competitors.json`, derivados de contratos adjudicados
+  (§8, no adivinados): AUTOMAYOR S.A. `860034604` (6 contratos, $3.33B) y EPIA SAS `830096621`.
+- **Prueba e2e local PASADA**: health, opportunities, competitor-analysis, contracts/tracking y dashboard,
+  todos 200 con datos reales de Croma.
+- **`data/demo-run.json` generado** (respaldo salvavidas §11 con salidas reales de los 3 endpoints núcleo).
+
 ---
 
 ## 🔧 Pendientes técnicos (en orden de impacto)
@@ -58,10 +70,21 @@ Documento-norte del reto: `RETO.md`
 
 ---
 
-## 🚀 Deploy (pendiente) — notas
-- Servidor Express + estático; Node 18. Setear `CROMA_API_KEY` y `PORT` como env vars en la plataforma.
-- Opciones rápidas: Render (free web service), Railway, Fly.io.
-- Comando de arranque: `npm run build && npm start` (o `npx tsx src/index.ts`).
+## 🚀 Deploy en VPS → autodata.jyrmecatronica.com (LISTO PARA 1 COMANDO)
+- Destino: VPS Hetzner `root@46.225.123.7`, subdominio **autodata.jyrmecatronica.com**, puerto interno 8096.
+- **Diagnóstico llave:** la del VPS es `~/.ssh/hetzner_N8N_Letin_IA_key` (CIFRADA con passphrase);
+  `id_ed25519` no está autorizada. Antes fallaba solo porque `BatchMode` no podía desbloquear la cifrada.
+- **Deploy turnkey ya preparado** en `secop-intelligence/deploy/` (build de prod validado local):
+  - `deploy-vps.sh` — idempotente: instala Node, rsync, `.env` remoto (600), `npm ci`+build, systemd, nginx, health check.
+  - `secop-intelligence.service` (systemd) + `nginx-autodata.conf` + `README.md`.
+- **Para ejecutarlo (desde tu PC, cuando estés frente a él):**
+  ```bash
+  eval $(ssh-agent) && ssh-add ~/.ssh/hetzner_N8N_Letin_IA_key   # pide passphrase (no queda en disco)
+  cd ~/3_Reto_Croma/secop-intelligence && bash deploy/deploy-vps.sh
+  ```
+- **Post-deploy (tú, una vez):** registro DNS A `autodata.jyrmecatronica.com -> 46.225.123.7`, luego
+  `ssh root@46.225.123.7 'certbot --nginx -d autodata.jyrmecatronica.com --agree-tos -m jhacardonahe@gmail.com'`.
+- Alternativa sin VPS: Render/Railway/Fly.io (`npm run build && npm start`, env `CROMA_API_KEY`/`PORT`).
 
 ---
 

@@ -1,0 +1,235 @@
+{
+  "_nota": "Respaldo REAL para el demo (datos capturados de Croma 2026-08-15). Fuente de verdad si la API falla en vivo.",
+  "generated_at": "2026-08-16T00:56:09.143Z",
+  "opportunities": {
+    "timestamp": "2026-08-16T00:55:44.225Z",
+    "total_processed": 500,
+    "total_filtered": 102,
+    "detail_lookups": 60,
+    "failed_lookups": 0,
+    "total_count": 3,
+    "opportunities": [
+      {
+        "notice_uid": "CO1.NTC.10511254",
+        "entity_name": "DILOF",
+        "entity_nit": "800141397",
+        "object": "ADQUISICIÓN SUBCOMPONENTE DE MOVILIDAD; LOTE 1: CAMIONETAS SUV HÍBRIDA UNIFORMADA PARA CCCPC, LOTE 2: EMBARCACIÓN MENOR PARA 12 PASAJEROS UNIFORMADA.",
+        "estimated_value": 5173124897,
+        "publication_date": "2026-07-14",
+        "closing_date": "2026-08-06",
+        "days_to_close": -10,
+        "foton_line": "PICKUP_MHEV",
+        "line_confidence": 0.93,
+        "scoring": {
+          "value_score": 30,
+          "urgency_score": 0,
+          "entity_score": 25,
+          "confidence_score": 13.95,
+          "total": 68.95
+        },
+        "alerts": [
+          "high_value",
+          "urgent_close",
+          "repeated_buyer",
+          "pickup_mhev"
+        ],
+        "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.10511254"
+      },
+      {
+        "notice_uid": "CO1.NTC.10661726",
+        "entity_name": "DILOF",
+        "entity_nit": "800141397",
+        "object": "ADQUISICIÓN SUBCOMPONENTE DE MOVILIDAD; LOTE 1: CAMIONETAS SUV HÍBRIDA UNIFORMADA PARA CCCPC, LOTE 2: EMBARCACIÓN MENOR PARA 12 PASAJEROS UNIFORMADA.",
+        "estimated_value": 4916124897,
+        "publication_date": "2026-08-06",
+        "closing_date": "2026-08-14",
+        "days_to_close": -2,
+        "foton_line": "PICKUP_MHEV",
+        "line_confidence": 0.93,
+        "scoring": {
+          "value_score": 30,
+          "urgency_score": 0,
+          "entity_score": 25,
+          "confidence_score": 13.95,
+          "total": 68.95
+        },
+        "alerts": [
+          "high_value",
+          "urgent_close",
+          "repeated_buyer",
+          "pickup_mhev"
+        ],
+        "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.10661726"
+      },
+      {
+        "notice_uid": "CO1.NTC.10277390",
+        "entity_name": "DILOF",
+        "entity_nit": "800141397",
+        "object": "ADQUISICIÓN DE EQUIPO AUTOMOTOR LOTE 1: CAMIONETA TIPO VANS UNIFORMADA PARA LA CONDUCCIÓN CUSTODIA Y COMPARECENCIA DE PERSONAS CAPTURADAS, LOTE 2: CAMIONETA PICK UP UNIFORMADA PARA ANTIEXPLOSIVOS, LOTE 3: CAMIÓN UNIFORMADO TIPO NECROMÓVIL y, LOTE 4: MICROBÚS PARA LA ATENCIÓN INFANCIA SEGURA E-PAÍS",
+        "estimated_value": 10110133616,
+        "publication_date": "2026-05-07",
+        "closing_date": "2026-05-15",
+        "days_to_close": -93,
+        "foton_line": "AUV_VAN",
+        "line_confidence": 0.83,
+        "scoring": {
+          "value_score": 30,
+          "urgency_score": 0,
+          "entity_score": 25,
+          "confidence_score": 12.45,
+          "total": 67.45
+        },
+        "alerts": [
+          "high_value",
+          "urgent_close",
+          "repeated_buyer"
+        ],
+        "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.10277390"
+      }
+    ]
+  },
+  "competitor_analysis": {
+    "competitor_nit": "860034604",
+    "competitor_name": "AUTOMAYOR S.A.",
+    "period": {
+      "from_date": "2024-01-01",
+      "to_date": null
+    },
+    "statistics": {
+      "total_contracts": 6,
+      "total_value": 3331689022.06,
+      "average_contract_value": 555281504,
+      "price_gap": null
+    },
+    "by_line": {
+      "PICKUP": {
+        "contracts_won": 2,
+        "total_value": 678342000,
+        "average_price": 339171000
+      },
+      "UNKNOWN": {
+        "contracts_won": 4,
+        "total_value": 2653347022.06,
+        "average_price": 663336756
+      }
+    },
+    "top_entities": [
+      {
+        "entity": "ALCALDÍA DISTRITAL DE SANTA MARTA",
+        "entity_nit": "891780009",
+        "contracts": 1,
+        "value": 1840436822.06
+      },
+      {
+        "entity": "ALCALDÍA DEL DISTRITO TURÍSTICO Y CULTURAL DE CARTAGENA DE INDIAS",
+        "entity_nit": "890480184",
+        "contracts": 1,
+        "value": 678321000
+      },
+      {
+        "entity": "DILOF",
+        "entity_nit": "800141397",
+        "contracts": 1,
+        "value": 623342000
+      },
+      {
+        "entity": "Rama Judicial  Dirección Ejecutiva de Administración Judicial",
+        "entity_nit": "800093816",
+        "contracts": 2,
+        "value": 134589200
+      },
+      {
+        "entity": "MINISTERIO DE DEFENSA NACIONAL",
+        "entity_nit": "899999003",
+        "contracts": 1,
+        "value": 55000000
+      }
+    ],
+    "sanctions_count": 0,
+    "trend": "decreasing"
+  },
+  "contract_tracking": {
+    "contract_id": "CO1.PCCNTR.9547105",
+    "found": true,
+    "entity": "DILOF",
+    "value": 623342000,
+    "status": {
+      "contract_status": "En ejecución",
+      "execution_percentage": null,
+      "planned_end_date": "2026-10-15",
+      "actual_end_date": null,
+      "is_delayed": false
+    },
+    "alerts": {
+      "has_sanctions": false,
+      "modifications_count": 0,
+      "has_delays": false,
+      "has_active_guarantee": true
+    },
+    "additions": [],
+    "guarantees": [
+      {
+        "insurer": "SEGUROS DEL ESTADO",
+        "policy_number": "3744101046808",
+        "insured": "AUTOMAYOR SA",
+        "beneficiary": "NACIONMINISTERIO DE DEFENSA NACIONALPOLICIA NACIONALDIRECCION LOGISTICA Y FINANCIERA",
+        "policy_created_date": "2026-06-11",
+        "policy_sent_date": "2026-06-18",
+        "policy_end_date": "2029-10-18",
+        "policy_side": "PolizaProveedor",
+        "status": "Aceptada",
+        "policy_type": "Contrato de Seguro",
+        "policy_subtype": null,
+        "value": 31167100,
+        "created_date": "2026-06-11"
+      },
+      {
+        "insurer": "SEGUROS DEL ESTADO",
+        "policy_number": "3744101046808",
+        "insured": "AUTOMAYOR SA",
+        "beneficiary": "NACIONMINISTERIO DE DEFENSA NACIONALPOLICIA NACIONALDIRECCION LOGISTICA Y FINANCIERA",
+        "policy_created_date": "2026-06-11",
+        "policy_sent_date": "2026-06-18",
+        "policy_end_date": "2027-04-18",
+        "policy_side": "PolizaProveedor",
+        "status": "Aceptada",
+        "policy_type": "Contrato de Seguro",
+        "policy_subtype": null,
+        "value": 124668400,
+        "created_date": "2026-06-11"
+      },
+      {
+        "insurer": "SEGUROS DEL ESTADO",
+        "policy_number": "3744101046808",
+        "insured": "AUTOMAYOR SA",
+        "beneficiary": "NACIONMINISTERIO DE DEFENSA NACIONALPOLICIA NACIONALDIRECCION LOGISTICA Y FINANCIERA",
+        "policy_created_date": "2026-06-11",
+        "policy_sent_date": "2026-06-18",
+        "policy_end_date": "2028-10-18",
+        "policy_side": "PolizaProveedor",
+        "status": "Aceptada",
+        "policy_type": "Contrato de Seguro",
+        "policy_subtype": null,
+        "value": 311671000,
+        "created_date": "2026-06-11"
+      },
+      {
+        "insurer": "SEGUROS DEL ESTADO",
+        "policy_number": "3744101046808",
+        "insured": "AUTOMAYOR SA",
+        "beneficiary": "NACIONMINISTERIO DE DEFENSA NACIONALPOLICIA NACIONALDIRECCION LOGISTICA Y FINANCIERA",
+        "policy_created_date": "2026-06-11",
+        "policy_sent_date": "2026-06-18",
+        "policy_end_date": "2028-10-18",
+        "policy_side": "PolizaProveedor",
+        "status": "Aceptada",
+        "policy_type": "Contrato de Seguro",
+        "policy_subtype": null,
+        "value": 311671000,
+        "created_date": "2026-06-11"
+      }
+    ],
+    "execution_items": [],
+    "health_score": 70
+  }
+}
