@@ -85,7 +85,58 @@ Documento-norte del reto: `RETO.md`
   Nota: la vía de **pliegos PDF NO fue viable** (extract_markdown de Croma falla en SECOP II y los
   anexos no son accesibles) → se entregó la versión factible desde el texto.
 
+## ✅ Panel de trazabilidad en vivo (SSE) — HECHO (2026-08-16)
+> Hace VISIBLE el guard de citas: el evaluador ve cada dato del tablero naciendo de un `notice_uid`
+> oficial y confirmándose contra el payload crudo de Croma. Refuerza el criterio "Uso de Croma".
+- **Pipeline instrumentado** (`src/modules/monitoring.ts`): callback opcional `onEvent` + tipo
+  `MonitorEvent` (`stage` / `entity` / `counts` / `progress` / `opportunity` / `summary`). Es
+  **puramente observacional** — no altera el resultado de la corrida (los endpoints existentes y el
+  CSV siguen intactos).
+- **Endpoint SSE** `GET /api/opportunities/stream` (`src/api/handlers.ts` → `streamOpportunities`,
+  ruta en `routes.ts`). Mismos filtros que `/api/opportunities`; emite eventos `event:` y cierra con
+  `done` (payload idéntico al JSON de la tabla) o `failed` (nombre propio para no chocar con el
+  `error` nativo de EventSource). Header `X-Accel-Buffering: no` para no bufferizar tras nginx.
+- **Panel lateral** (`public/index.html`, `<aside id="trace">`): rail fijo derecho (colapsa abajo en
+  <1100px). Muestra las 6 etapas con su explicación y estado en vivo (○→⟳→✓), métricas
+  (procesados/pre-filtrados/detalles/verificadas) y feed por oportunidad con `✓ cita completa` /
+  `⚠ parcial` + `notice_uid`. Cliente sobre `EventSource` con guarda `finished` (evita la
+  reconexión automática que dispararía una corrida nueva y cara).
+- **Verificado local (2026-08-16)** contra Croma real: typecheck + build limpios; stream emite todos
+  los eventos; oportunidad real confirmada 5/5 (DILOF PICKUP_MHEV, `CO1.NTC.10661726`); evento `done`
+  con la forma exacta que consume la tabla.
+- **Nota de deploy (importante):** `deploy-vps.sh` NO reescribe el nginx.conf vivo porque ya tiene SSL
+  (línea 79: solo instala si falta `listen 443`). El SSE funciona igual por el header
+  `X-Accel-Buffering: no`. La plantilla `deploy/nginx-autodata.conf` ya trae un `location` dedicado
+  con `proxy_buffering off` (para instalaciones limpias). **Si en producción el panel se ve "a
+  saltos"/todo al final**, añadir a mano en el conf vivo del 443, en un `location = /api/opportunities/stream`:
+  `proxy_buffering off; proxy_read_timeout 600s;` y `nginx -t && systemctl reload nginx`.
+
 ## 🔧 Pendientes técnicos (en orden de impacto)
+
+- [ ] **🔎 REVISAR ANTES DE DESPLEGAR — posibles cambios de procesos en paralelo.** Otras sesiones
+      trabajaron el árbol a la vez (trabajo de "mercado": commits `6d9ad37`…`c9cbe14`) y **committearon
+      también mis cambios del panel SSE** — `git status` solo mostró `PENDIENTES.md` y
+      `deploy/nginx-autodata.conf` sin commitear. **Quedó a medias la verificación de integridad**
+      (la interrumpí a pedido). Antes de `deploy-vps.sh`, confirmar en la próxima sesión:
+      - `git log --oneline` y `git status` — entender qué entró y qué falta por commitear.
+      - Que HEAD contiene INTACTO el panel: `streamOpportunities` + ruta `/api/opportunities/stream`,
+        `onEvent`/`MonitorEvent` en `monitoring.ts`, y `id="trace"` en `public/index.html`.
+      - Que el trabajo de `market.ts`/`getMarket` no rompió nada compartido (ambos usan
+        `runMonitoring`/`croma.process`): correr **`npm run typecheck` + `npm run build` + `npm run eval`
+        (gate 11/11)** — última corrida local dio verde ANTES de los commits de mercado; re-verificar.
+      - Commitear `PENDIENTES.md` + `deploy/nginx-autodata.conf` (cambios míos aún sin commitear).
+      - Recordar: `/api/market` sigue con el bug de "todo en cero" (abajo) — no bloquea el panel, pero
+        no lucirlo en el video hasta arreglarlo.
+
+- [ ] **⚡ Paralelizar la fase de detalle del pipeline** (mejora del panel en vivo). Hoy en
+      `runMonitoring` los `croma.process(notice_uid)` se hacen **secuenciales** (uno tras otro),
+      cada uno gateado por el `RateLimiter`; una corrida en frío con el tope `maxDetail=60` puede
+      superar 60s. **Fix:** cola con concurrencia acotada (p.ej. 5 en vuelo) que tira de los
+      candidatos; el `RateLimiter` ya garantiza el techo por minuto, así que la corrección se
+      mantiene. Caveats a manejar: el tope `maxDetail` necesita contador atómico (no `if` dentro
+      del loop), y el orden de los eventos `progress`/`opportunity` deja de ser determinista
+      (el panel ya los pinta como llegan, así que es aceptable). Beneficio: corrida ~concurrencia
+      veces más rápida ⇒ demo/video más ágil. Aplica igual a `market.ts` (misma fase secuencial).
 
 - [ ] **🐞 `/api/market` devuelve TODO EN CERO en producción** (verificado e2e 2026-08-16, 02:05).
       Corrida real contra el VPS: `http=200`, `t=208s`, **detail_lookups=40 pero contracts=0**,
@@ -107,6 +158,20 @@ Documento-norte del reto: `RETO.md`
         01:47–01:53 "feat/fix(mercado)"). NO tocar sin coordinar para no pisarnos. El deploy del
         2026-08-16 subió su última versión commiteada (01:53), que es la que responde en cero.
         El resto del sistema (oportunidades + guard + competidor) NO se ve afectado.
+      - ✅ **RESUELTO 2026-08-16 (~02:12):** la causa NO era la fuente de datos sino el barrido.
+        Fixes aplicados y desplegados (`c9cbe14`): (1) filtrar a procesos **adjudicados**;
+        (2) **repartir el presupuesto de detalles por entidad** (breadth, no depth-first);
+        (3) **pre-clasificar por el NOMBRE del proceso** para descartar motos/embarcaciones sin
+        gastar Croma; (4) **caché de resultado en memoria** (TTL 30m) + caché de detalles en disco.
+        Verificado en vivo: 4 contratos, $7.95B, 3 proveedores (incl. IMPLESI, no sembrado),
+        2 entidades, 3 sectores; endpoint público en ~0.5s tras warm-up.
+
+- [ ] **📈 (Mejora mercado) Ampliar la lista de entidades compradoras para "engordar" el mercado.**
+      Hoy `/api/market` barre solo las 4 entidades de `data/entities.json`, por eso el mercado sale
+      real pero pequeño (4 contratos). Sumar más compradores verificados (gobernaciones grandes,
+      Ejército/Fuerzas Militares, Agencia Logística FF.MM., alcaldías capitales, INVÍAS, empresas de
+      servicios públicos) daría un mercado por sector mucho más rico. Verificar cada NIT con
+      `secop_processes_by_entity` antes de cargarlo y subir `maxDetail`/`perEntity` en proporción.
 
 - [ ] **Conseguir 3–5 NITs de entidades que SÍ compran vehículos** y verificarlos con Croma
       (`secop_processes_by_entity`). Candidatos: gobernaciones, alcaldías grandes, Policía Nacional,
