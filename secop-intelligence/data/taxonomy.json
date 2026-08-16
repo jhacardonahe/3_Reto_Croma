@@ -1,0 +1,20 @@
+{
+  "name": "Foton Colombia (preset)",
+  "description": "Líneas de vehículo Foton. Reproduce exactamente el clasificador determinista original (brief §4). Es la taxonomía por defecto; el usuario puede reemplazarla generando una nueva desde una descripción de su negocio.",
+  "generated_by": "preset",
+  "prefilter": [
+    "camioneta", "pick-up", "pickup", "vehiculo", "automotor", "automovil",
+    "camion", "transporte", "suv", "furgon", "van", "microbus", "volqueta"
+  ],
+  "rules": [
+    { "line": "NEW_ENERGY_PICKUP", "confidence": 0.95, "include": [["camioneta"], ["electrica", "electrico"]], "matched_on": "camioneta + eléctrica" },
+    { "line": "PICKUP_MHEV", "confidence": 0.93, "include": [["camioneta"], ["hibrida", "hybrid", "mhev"]], "matched_on": "camioneta + híbrida/MHEV" },
+    { "line": "PICKUP", "confidence": 0.90, "include": [["camioneta"], ["diesel"]], "exclude": ["electrica", "electrico"], "matched_on": "camioneta + diesel" },
+    { "line": "HDT", "confidence": 0.88, "include": [["tractocamion", "tractomula", "cabezote"]], "matched_on": "tractocamión" },
+    { "line": "LDT", "confidence": 0.86, "include": [["camion", "volqueta"]], "exclude": ["camioneta"], "matched_on": "camión" },
+    { "line": "NEW_ENERGY", "confidence": 0.85, "include": [["vehiculo"], ["electrica", "electrico"]], "matched_on": "vehículo + eléctrico" },
+    { "line": "AUV_VAN", "confidence": 0.83, "include": [["furgon", "van", "microbus"]], "matched_on": "furgón/van/microbús" },
+    { "line": "SPECIAL", "confidence": 0.82, "include": [["ambulancia", "blindado", "bomberos"]], "matched_on": "vehículo especial" },
+    { "line": "PICKUP", "confidence": 0.75, "include": [["camioneta", "suv", "pick-up", "pickup", "doble cabina"]], "matched_on": "camioneta/SUV/pickup genérico" }
+  ]
+}

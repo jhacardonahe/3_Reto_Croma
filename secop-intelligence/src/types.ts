@@ -8,21 +8,38 @@ export type { Verification, VerifyCheck, CheckStatus, AggregateVerification } fr
 // ----------------------------------------------------------------------------
 // Líneas de producto Foton
 // ----------------------------------------------------------------------------
-export type FotonLine =
-  | 'NEW_ENERGY_PICKUP'
-  | 'PICKUP_MHEV'
-  | 'PICKUP'
-  | 'LDT'
-  | 'HDT'
-  | 'NEW_ENERGY'
-  | 'AUV_VAN'
-  | 'SPECIAL'
-  | 'UNKNOWN';
+// Categoría de clasificación. Antes era una unión fija de líneas Foton; ahora es ABIERTA
+// (string) porque la taxonomía ACTIVA puede definirla el usuario a partir de una descripción
+// de su negocio. 'UNKNOWN' sigue siendo el centinela de "no clasificado".
+export type FotonLine = string;
 
 export interface Classification {
   line: FotonLine;
   confidence: number; // 0..1
   matched_on?: string; // término que disparó la clasificación (trazabilidad)
+}
+
+// ----------------------------------------------------------------------------
+// Taxonomía dinámica: reglas de clasificación configurables (preset Foton por
+// defecto, o generadas por IA desde una descripción del negocio, o manuales).
+// La clasificación por proceso SIGUE siendo determinista, first-match y citable.
+// ----------------------------------------------------------------------------
+export interface TaxonomyRule {
+  line: string; // categoría a asignar si la regla matchea
+  confidence: number; // 0..1
+  // `include`: grupos en AND-de-ORs. La regla matchea si CADA grupo tiene ≥1 término presente
+  // (ej.: [["camioneta"], ["electrica","electrico"]] = camioneta Y (electrica|electrico)).
+  include: string[][];
+  exclude?: string[]; // si alguno aparece, la regla NO matchea (ej.: "camion" excluye "camioneta")
+  matched_on?: string; // etiqueta de trazabilidad (qué disparó la clasificación)
+}
+export interface Taxonomy {
+  name: string;
+  description?: string;
+  prefilter: string[]; // pre-filtro barato a nivel de resumen (antes GENERAL_FILTER)
+  rules: TaxonomyRule[]; // evaluadas en orden — first match wins
+  generated_by?: 'preset' | 'ai' | 'manual';
+  generated_at?: string;
 }
 
 // ----------------------------------------------------------------------------

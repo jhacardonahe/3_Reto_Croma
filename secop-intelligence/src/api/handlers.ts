@@ -3,6 +3,10 @@ import { runMonitoring } from '../modules/monitoring.js';
 import { analyzeCompetitor } from '../modules/competitive.js';
 import { analyzeMarket } from '../modules/market.js';
 import { analyzeRetrospective } from '../modules/retrospective.js';
+import { getActiveTaxonomy, setActiveTaxonomy, activeSegments } from '../modules/classification.js';
+import { generateTaxonomy, TaxonomyGenError } from '../modules/taxonomy-gen.js';
+import { defaultTaxonomy } from '../config.js';
+import type { Taxonomy } from '../types.js';
 import { trackContract, trackContractWithSanctions } from '../modules/tracking.js';
 import { opportunitiesToCsv } from '../utils/csv-export.js';
 import { croma } from '../croma/client.js';
@@ -171,6 +175,54 @@ export async function getRetrospective(req: Request, res: Response): Promise<voi
   } catch (err) {
     fail(res, err);
   }
+}
+
+// --- Taxonomía dinámica (categorías definidas por el usuario) ---------------
+
+/** Taxonomía activa + segmentos (para poblar los desplegables del dashboard). */
+export async function getTaxonomy(_req: Request, res: Response): Promise<void> {
+  const tax = getActiveTaxonomy();
+  res.json({ taxonomy: tax, segments: activeSegments(tax), ai_available: config.anthropicApiKey.trim().length > 0 });
+}
+
+/** Segmentos (líneas) de la taxonomía activa. */
+export async function getSegments(_req: Request, res: Response): Promise<void> {
+  res.json({ segments: activeSegments() });
+}
+
+/** Genera una taxonomía desde una descripción del negocio (IA). NO la activa: es para previsualizar. */
+export async function postGenerateTaxonomy(req: Request, res: Response): Promise<void> {
+  try {
+    const description = String(req.body?.description ?? '').trim();
+    const taxonomy = await generateTaxonomy(description);
+    res.json({ taxonomy, segments: activeSegments(taxonomy) });
+  } catch (err) {
+    const status = err instanceof TaxonomyGenError ? err.status : 500;
+    res.status(status >= 400 && status < 600 ? status : 500).json({
+      error: err instanceof Error ? err.message : 'Error generando la taxonomía',
+    });
+  }
+}
+
+/** Activa una taxonomía (la generada/editada, o cualquiera válida). Vuelve a compilarse en caliente. */
+export async function postSetTaxonomy(req: Request, res: Response): Promise<void> {
+  try {
+    const tax = req.body?.taxonomy as Taxonomy | undefined;
+    if (!tax || !Array.isArray(tax.rules) || tax.rules.length === 0 || !Array.isArray(tax.prefilter)) {
+      res.status(400).json({ error: 'Taxonomía inválida: requiere prefilter[] y rules[] no vacíos.' });
+      return;
+    }
+    setActiveTaxonomy(tax);
+    res.json({ ok: true, taxonomy: getActiveTaxonomy(), segments: activeSegments() });
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
+/** Restablece la taxonomía al preset Foton por defecto. */
+export async function postResetTaxonomy(_req: Request, res: Response): Promise<void> {
+  setActiveTaxonomy(defaultTaxonomy);
+  res.json({ ok: true, taxonomy: getActiveTaxonomy(), segments: activeSegments() });
 }
 
 export async function getContractTracking(req: Request, res: Response): Promise<void> {

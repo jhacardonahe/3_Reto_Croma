@@ -1,61 +1,61 @@
-import { GENERAL_FILTER } from '../config.js';
-import type { Classification } from '../types.js';
+import { defaultTaxonomy } from '../config.js';
+import type { Classification, Taxonomy } from '../types.js';
 
+/** Normaliza para comparar: minúsculas + sin tildes (robusto ante keywords con/sin acento). */
 function norm(s: string): string {
-  return (s ?? '').toLowerCase();
+  return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
-/** Pre-filtro barato: ¿el texto huele a vehículo? Evita gastar una llamada de detalle. */
-export function passesGeneralFilter(text: string): boolean {
-  const t = norm(text);
-  return GENERAL_FILTER.some((k) => t.includes(k));
+// --- Taxonomía activa -------------------------------------------------------
+// Arranca en el preset Foton; el usuario puede reemplazarla en runtime (generada por IA
+// desde una descripción del negocio) vía la API. La clasificación por proceso SIEMPRE es
+// determinista y citable — solo cambian las REGLAS, no el mecanismo.
+let active: Taxonomy = defaultTaxonomy;
+export function getActiveTaxonomy(): Taxonomy {
+  return active;
+}
+export function setActiveTaxonomy(t: Taxonomy): void {
+  active = t;
 }
 
 /**
- * Clasifica el texto de un proceso a una línea Foton.
- * Evaluación en orden jerárquico — first match wins (brief §4.1).
+ * Clasifica un texto contra una taxonomía (determinista, first-match).
+ * Una regla matchea si CADA grupo de `include` tiene ≥1 término presente (AND-de-ORs)
+ * y NINGÚN término de `exclude` aparece. Sin taxonomía explícita usa la activa.
  */
-export function classifyFotonLine(text: string): Classification {
+export function classify(text: string, taxonomy: Taxonomy = active): Classification {
   const t = norm(text);
-  const has = (...ks: string[]) => ks.some((k) => t.includes(k));
-  const isElectric = has('eléctrica', 'eléctrico', 'electrica', 'electrico');
-  const isHybrid = has('hibrida', 'híbrida', 'hybrid', 'mhev');
-
-  // 1. Camioneta eléctrica → NEW_ENERGY_PICKUP
-  if (t.includes('camioneta') && isElectric) {
-    return { line: 'NEW_ENERGY_PICKUP', confidence: 0.95, matched_on: 'camioneta + eléctrica' };
-  }
-  // 2. Camioneta híbrida → PICKUP_MHEV
-  if (t.includes('camioneta') && isHybrid) {
-    return { line: 'PICKUP_MHEV', confidence: 0.93, matched_on: 'camioneta + híbrida/MHEV' };
-  }
-  // 3. Camioneta diésel (sin eléctrica/híbrida) → PICKUP
-  if (t.includes('camioneta') && has('diesel', 'diésel') && !isElectric) {
-    return { line: 'PICKUP', confidence: 0.9, matched_on: 'camioneta + diesel' };
-  }
-  // 4. Tractocamión / carga pesada → HDT
-  if (has('tractocamión', 'tractocamion', 'tractomula', 'cabezote')) {
-    return { line: 'HDT', confidence: 0.88, matched_on: 'tractocamión' };
-  }
-  // 5. Camión (sin "camioneta") → LDT
-  if (has('camión', 'camion', 'volqueta') && !t.includes('camioneta')) {
-    return { line: 'LDT', confidence: 0.86, matched_on: 'camión' };
-  }
-  // 6. Vehículo eléctrico → NEW_ENERGY
-  if (has('vehículo', 'vehiculo') && isElectric) {
-    return { line: 'NEW_ENERGY', confidence: 0.85, matched_on: 'vehículo + eléctrico' };
-  }
-  // 7. Furgón / van / microbús → AUV_VAN
-  if (has('furgón', 'furgon', 'van', 'microbus', 'microbús')) {
-    return { line: 'AUV_VAN', confidence: 0.83, matched_on: 'furgón/van/microbús' };
-  }
-  // 8. Especiales
-  if (has('ambulancia', 'blindado', 'bomberos')) {
-    return { line: 'SPECIAL', confidence: 0.82, matched_on: 'vehículo especial' };
-  }
-  // 9. Camioneta genérica / SUV / pickup
-  if (t.includes('camioneta') || has('suv', 'pick-up', 'pickup', 'doble cabina')) {
-    return { line: 'PICKUP', confidence: 0.75, matched_on: 'camioneta/SUV/pickup genérico' };
+  for (const r of taxonomy.rules) {
+    const includeOk = r.include.every((group) => group.some((k) => t.includes(norm(k))));
+    if (!includeOk) continue;
+    const excludeHit = (r.exclude ?? []).some((k) => t.includes(norm(k)));
+    if (excludeHit) continue;
+    return {
+      line: r.line,
+      confidence: r.confidence,
+      matched_on: r.matched_on ?? r.include.map((g) => g[0]).join(' + '),
+    };
   }
   return { line: 'UNKNOWN', confidence: 0 };
+}
+
+/** Pre-filtro barato: ¿el texto huele a algo de la taxonomía? Evita gastar una llamada de detalle. */
+export function passesPrefilter(text: string, taxonomy: Taxonomy = active): boolean {
+  const t = norm(text);
+  return taxonomy.prefilter.some((k) => t.includes(norm(k)));
+}
+
+/** Categorías (líneas) declaradas por la taxonomía activa — para poblar los desplegables del UI. */
+export function activeSegments(taxonomy: Taxonomy = active): string[] {
+  return [...new Set(taxonomy.rules.map((r) => r.line))];
+}
+
+// --- Compatibilidad hacia atrás --------------------------------------------
+// Los 6 módulos existentes (monitoreo, mercado, histórico, competencia, demo, eval)
+// siguen llamando estos nombres; ahora resuelven contra la taxonomía ACTIVA.
+export function classifyFotonLine(text: string): Classification {
+  return classify(text, active);
+}
+export function passesGeneralFilter(text: string): boolean {
+  return passesPrefilter(text, active);
 }

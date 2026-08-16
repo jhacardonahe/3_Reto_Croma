@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import type { FotonLine } from './types.js';
+import type { FotonLine, Taxonomy } from './types.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dataDir = resolve(__dirname, '..', 'data');
@@ -34,10 +34,17 @@ export const config = {
   maxCallsPerMin: Number(process.env.CROMA_MAX_CALLS_PER_MIN ?? 10),
   cacheTtlHours: Number(process.env.CACHE_TTL_HOURS ?? 6),
   cacheDir: resolve(dataDir, 'cache'),
+  // IA para generar taxonomías desde una descripción del negocio (Anthropic Messages API).
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? '',
+  claudeModel: process.env.CLAUDE_MODEL ?? 'claude-opus-4-8',
 };
 
 export const entities: EntityConfig[] = loadJson<{ entities: EntityConfig[] }>('entities.json').entities;
 export const competitors: CompetitorConfig[] = loadJson<{ competitors: CompetitorConfig[] }>('competitors.json').competitors;
+
+// Taxonomía por defecto (preset Foton). Es la que se clasifica salvo que el usuario active
+// una nueva (generada por IA desde una descripción del negocio). Vive en data/taxonomy.json.
+export const defaultTaxonomy: Taxonomy = loadJson<Taxonomy>('taxonomy.json');
 
 // Pre-filtro a nivel de RESUMEN (barato, sin gastar detalle): los vehículos se compran
 // como bienes ("Compraventa"/"Suministros"), nunca como "Prestación de servicios".

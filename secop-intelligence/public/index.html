@@ -141,6 +141,21 @@
     </div>
   </header>
 
+  <div class="bar" style="border-bottom:1px solid #23304f; background:#0d1426">
+    <div style="flex-basis:100%"><h2 class="sec">🧭 Categorías del negocio <span id="taxname" style="color:var(--mut);font-weight:400;font-size:12px"></span></h2>
+      <div style="color:var(--mut);font-size:12px">Describe qué vende/hace tu empresa y la IA define las categorías; luego la clasificación de procesos es determinista y citable. O deja el preset Foton.</div>
+    </div>
+    <div style="flex:1; min-width:280px">
+      <label>Descripción del negocio</label>
+      <textarea id="taxdesc" rows="2" style="width:100%; background:var(--card); border:1px solid #2a3557; color:var(--ink); border-radius:8px; padding:9px 12px; font-size:14px; resize:vertical" placeholder="Ej.: Vendemos camionetas, camiones y buses eléctricos e híbridos, y vehículos especiales (ambulancia, bomberos)."></textarea>
+    </div>
+    <div style="align-self:end; display:flex; gap:8px">
+      <button id="taxgen">Generar con IA</button>
+      <button id="taxreset" style="background:#22304f; border-color:#2a3557; color:var(--ink); font-weight:500">Preset Foton</button>
+    </div>
+    <div style="flex-basis:100%"><div class="meta" id="taxmeta" style="margin:6px 0 0">Categorías activas: <span id="taxsegs">—</span></div><div id="taxpreview"></div></div>
+  </div>
+
   <div class="bar">
     <div>
       <label>NITs de entidades (coma)</label>
@@ -313,6 +328,78 @@
     }
     refreshUsage();
     setInterval(refreshUsage, 30000);
+
+    // --- Taxonomía dinámica: categorías definidas por el usuario ------------
+    let generatedTax = null; // taxonomía generada pendiente de activar
+    function populateSegments(segments) {
+      const opts = ['<option value="">Todos</option>'].concat((segments || []).map((s) => `<option>${s}</option>`)).join('');
+      // conserva la selección previa si sigue existiendo
+      for (const id of ['segment', 'mline', 'hline']) {
+        const el = $(id); if (!el) continue;
+        const prev = el.value; el.innerHTML = opts;
+        if (prev && (segments || []).includes(prev)) el.value = prev;
+      }
+    }
+    function renderTaxPreview(tax, activatable) {
+      if (!tax) { $('taxpreview').innerHTML = ''; return; }
+      const rules = (tax.rules || []).map((r) =>
+        `<tr><td class="line">${r.line}</td><td>${(r.include || []).map((g) => `<span class="spec">${g.join(' | ')}</span>`).join(' + ')}${(r.exclude && r.exclude.length) ? ` <span style="color:var(--hi);font-size:11px">− ${r.exclude.join(', ')}</span>` : ''}</td><td style="color:var(--mut)">${Math.round((r.confidence||0)*100)}%</td></tr>`).join('');
+      $('taxpreview').innerHTML = `
+        <div class="meta" style="margin:8px 0 4px"><b>${tax.name || 'Taxonomía'}</b>${tax.description ? ` — <span style="color:var(--mut)">${tax.description}</span>` : ''}
+          ${activatable ? '<button id="taxactivate" style="margin-left:10px;padding:5px 10px">Activar esta taxonomía</button>' : '<span class="vchip ok" style="margin-left:8px">activa</span>'}</div>
+        <table><thead><tr><th>Categoría</th><th>Reglas (grupos AND · sinónimos OR)</th><th>Conf.</th></tr></thead><tbody>${rules}</tbody></table>
+        <div class="meta" style="margin-top:4px">Pre-filtro: ${(tax.prefilter || []).map((k) => `<span class="spec">${k}</span>`).join('')}</div>`;
+      if (activatable) $('taxactivate').onclick = () => activateTax(tax);
+    }
+    async function loadTaxonomy() {
+      try {
+        const d = await (await fetch('/api/taxonomy')).json();
+        $('taxname').textContent = `· ${d.taxonomy.name}`;
+        $('taxsegs').innerHTML = (d.segments || []).map((s) => `<span class="spec">${s}</span>`).join('') || '—';
+        populateSegments(d.segments);
+        if (!d.ai_available) { $('taxgen').disabled = true; $('taxgen').title = 'Configura ANTHROPIC_API_KEY en el servidor para generar con IA'; $('taxgen').textContent = 'IA no configurada'; }
+      } catch (_) { /* silencioso */ }
+    }
+    async function generateTax() {
+      const description = $('taxdesc').value.trim();
+      if (!description) { $('taxmeta').innerHTML = '⚠️ Escribe una descripción del negocio.'; return; }
+      $('taxgen').disabled = true; $('taxmeta').textContent = 'Generando taxonomía con IA… (unos segundos)'; $('taxpreview').innerHTML = '';
+      try {
+        const r = await fetch('/api/taxonomy/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ description }) });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Error');
+        generatedTax = d.taxonomy;
+        $('taxmeta').innerHTML = `Propuesta con <b>${(d.segments || []).length}</b> categorías. Revísala y pulsa <b>Activar</b>.`;
+        renderTaxPreview(d.taxonomy, true);
+      } catch (e) { $('taxmeta').innerHTML = '⚠️ ' + e.message; }
+      finally { $('taxgen').disabled = false; }
+    }
+    async function activateTax(tax) {
+      try {
+        const r = await fetch('/api/taxonomy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ taxonomy: tax }) });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Error');
+        $('taxname').textContent = `· ${d.taxonomy.name}`;
+        $('taxsegs').innerHTML = (d.segments || []).map((s) => `<span class="spec">${s}</span>`).join('');
+        populateSegments(d.segments);
+        renderTaxPreview(d.taxonomy, false);
+        $('taxmeta').innerHTML = '✅ Taxonomía activada. Las búsquedas y el histórico ya usan estas categorías.';
+      } catch (e) { $('taxmeta').innerHTML = '⚠️ ' + e.message; }
+    }
+    async function resetTax() {
+      try {
+        const d = await (await fetch('/api/taxonomy/reset', { method: 'POST' })).json();
+        generatedTax = null;
+        $('taxname').textContent = `· ${d.taxonomy.name}`;
+        $('taxsegs').innerHTML = (d.segments || []).map((s) => `<span class="spec">${s}</span>`).join('');
+        populateSegments(d.segments);
+        renderTaxPreview(d.taxonomy, false);
+        $('taxmeta').innerHTML = 'Restablecido al preset Foton.';
+      } catch (e) { $('taxmeta').innerHTML = '⚠️ ' + e.message; }
+    }
+    $('taxgen').onclick = generateTax;
+    $('taxreset').onclick = resetTax;
+    loadTaxonomy();
     const scoreClass = (s) => s >= 70 ? 's-hi' : s >= 50 ? 's-md' : 's-lo';
 
     // Chip del guard de citas: cada dato afirmado trazado al payload crudo de Croma.
