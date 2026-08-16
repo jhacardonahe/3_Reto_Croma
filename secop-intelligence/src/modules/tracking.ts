@@ -32,11 +32,32 @@ export async function trackContract(contractId: string): Promise<ContractTrackin
     has_active_guarantee: hasActiveGuarantee,
   };
 
+  // price_gap: valor adjudicado (contrato) vs. valor estimado del proceso (base_price).
+  // El noticeUID del proceso viene embebido en la URL del contrato. Negativo = adjudicado
+  // por debajo del estimado. En procesos multi-lote el estimado es del proceso completo.
+  let estimatedProcessValue: number | null = null;
+  let priceGap: number | null = null;
+  const noticeUid = String(c.url ?? '').match(/noticeUID=(CO1\.NTC\.\d+)/i)?.[1] ?? null;
+  if (noticeUid && c.value) {
+    try {
+      const proc = await croma.process(noticeUid);
+      const base = proc.found ? proc.process?.base_price ?? null : null;
+      if (base && base > 0) {
+        estimatedProcessValue = base;
+        priceGap = Math.round(((c.value - base) / base) * 1000) / 1000; // ratio, 3 decimales
+      }
+    } catch {
+      /* no rompe el tracking si falla el proceso */
+    }
+  }
+
   return {
     contract_id: contractId,
     found: true,
     entity: c.entity ?? null,
     value: c.value ?? null,
+    estimated_process_value: estimatedProcessValue,
+    price_gap: priceGap,
     status: {
       contract_status: c.status ?? null,
       execution_percentage: execPct,
@@ -98,6 +119,8 @@ function emptyTracking(contractId: string): ContractTracking {
     found: false,
     entity: null,
     value: null,
+    estimated_process_value: null,
+    price_gap: null,
     status: { contract_status: null, execution_percentage: null, planned_end_date: null, actual_end_date: null, is_delayed: false },
     alerts: { has_sanctions: false, modifications_count: 0, has_delays: false, has_active_guarantee: false },
     additions: [],

@@ -1,6 +1,6 @@
 {
   "_note": "Demo del motor de clasificación/scoring/alertas. Objetos representativos de SECOP + 1 registro REAL de Croma (CO1.NTC.10710152, correctamente filtrado como UNKNOWN). La conectividad en vivo con Croma se probó por separado: 1.869 procesos reales de la UdeA recuperados el 2026-08-15.",
-  "timestamp": "2026-08-16T05:45:35.763Z",
+  "timestamp": "2026-08-16T06:11:05.992Z",
   "total_processed": 6,
   "filtered_unknown": 1,
   "total_count": 5,
@@ -20,6 +20,10 @@
       "line_confidence": 0.95,
       "estimated_quantity": 3,
       "estimated_unit_price": 150000000,
+      "specs": [
+        "eléctrica",
+        "doble cabina"
+      ],
       "scoring": {
         "value_score": 27,
         "urgency_score": 20,
@@ -50,6 +54,11 @@
       "line_confidence": 0.9,
       "estimated_quantity": 5,
       "estimated_unit_price": 104000000,
+      "specs": [
+        "4x4",
+        "diésel",
+        "doble cabina"
+      ],
       "scoring": {
         "value_score": 30,
         "urgency_score": 10,
@@ -78,6 +87,9 @@
       "line_confidence": 0.93,
       "estimated_quantity": null,
       "estimated_unit_price": null,
+      "specs": [
+        "híbrida"
+      ],
       "scoring": {
         "value_score": 10.8,
         "urgency_score": 20,
@@ -107,6 +119,10 @@
       "line_confidence": 0.83,
       "estimated_quantity": null,
       "estimated_unit_price": null,
+      "specs": [
+        "furgón",
+        "microbús"
+      ],
       "scoring": {
         "value_score": 14.4,
         "urgency_score": 15,
@@ -135,6 +151,7 @@
       "line_confidence": 0.86,
       "estimated_quantity": null,
       "estimated_unit_price": null,
+      "specs": [],
       "scoring": {
         "value_score": 22.8,
         "urgency_score": 15,

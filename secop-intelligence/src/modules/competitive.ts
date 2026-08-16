@@ -1,7 +1,7 @@
 import { croma } from '../croma/client.js';
 import { competitors } from '../config.js';
 import { classifyFotonLine } from './classification.js';
-import { estimateUnits } from '../utils/estimate.js';
+import { estimateUnits, extractSpecs } from '../utils/estimate.js';
 import type { CompetitorAnalysis, CompetitorContract, Contract } from '../types.js';
 
 export interface CompetitorOptions {
@@ -83,6 +83,7 @@ export async function analyzeCompetitor(nit: string, opts: CompetitorOptions = {
       sign_date: c.sign_date ?? null,
       status: c.status ?? null,
       ...estimateUnits(c.object ?? null, c.value ?? null),
+      specs: extractSpecs(c.object ?? null),
     }))
     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
     .slice(0, 50);

@@ -4,16 +4,22 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SECOP Intelligence · Foton × Croma</title>
-  <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+  <link href="/vendor/chat-style.css" rel="stylesheet" />
   <style>
-    /* Widget del Asesor Comercial (n8n chat) en la paleta del dashboard */
+    /* Widget del Asesor Comercial (n8n chat) en la paleta del dashboard (autoalojado) */
     :root {
-      --chat--color-primary: #3ea6ff;
-      --chat--color-secondary: #33d69f;
+      --chat--color--primary: #3ea6ff;
+      --chat--color--secondary: #33d69f;
       --chat--window--width: 400px;
       --chat--window--height: 600px;
       --chat--header--background: #151b30;
-      --chat--heading--color: #e8ecf5;
+      --chat--header--color: #e8ecf5;
+      --chat--heading--font-size: 18px;
+      --chat--body--background: #0b1020;
+      --chat--message--bot--background: #151b30;
+      --chat--message--bot--color: #e8ecf5;
+      --chat--message--user--background: #3ea6ff;
+      --chat--message--user--color: #04121f;
       --chat--toggle--background: #3ea6ff;
     }
     :root { --bg:#0b1020; --card:#151b30; --ink:#e8ecf5; --mut:#93a0bd; --acc:#3ea6ff; --hi:#ff5d5d; --ok:#33d69f; }
@@ -36,6 +42,7 @@
     .s-hi { color:var(--ok); } .s-md { color:#e8c33e; } .s-lo { color:var(--mut); }
     .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; background:#22304f; color:var(--acc); margin:1px 3px 1px 0; }
     .pill.hi { background:#3a1c22; color:var(--hi); }
+    .spec { display:inline-block; padding:1px 6px; border-radius:6px; font-size:10px; background:#1c2745; color:#9fd0ff; margin:2px 3px 0 0; }
     .line { font-weight:600; color:var(--acc); }
     a { color:var(--acc); }
     .empty { color:var(--mut); padding:30px 0; }
@@ -182,7 +189,7 @@
             <td class="score ${scoreClass(o.scoring.total)}">${o.scoring.total.toFixed(1)}</td>
             <td class="line">${o.foton_line}<br><span style="color:var(--mut);font-size:11px">${Math.round(o.line_confidence*100)}%</span></td>
             <td>${o.entity_name ?? '—'}<br><span style="color:var(--mut);font-size:11px">${o.entity_nit ?? ''}${o.department?` · ${o.department}`:''}</span></td>
-            <td>${(o.object || '').slice(0,120)}</td>
+            <td>${(o.object || '').slice(0,120)}${(o.specs&&o.specs.length)?`<br>${o.specs.map(x=>`<span class="spec">${x}</span>`).join('')}`:''}</td>
             <td>${cop(o.estimated_value)}</td>
             <td>${o.estimated_quantity!=null?`${o.estimated_quantity} u · ${cop(o.estimated_unit_price)}`:'<span style="color:var(--mut)">—</span>'}</td>
             <td>${o.closing_date ?? '—'}${o.days_to_close!=null?`<br><span style="color:var(--mut);font-size:11px">${o.days_to_close} d</span>`:''}</td>
@@ -230,7 +237,7 @@
         const cts = (d.contracts || []).map((c) => `
           <tr>
             <td class="line">${c.line}</td>
-            <td>${(c.object || '—').slice(0,90)}<br><span style="color:var(--mut);font-size:11px">${c.entity ?? ''}${c.sign_date?` · ${c.sign_date}`:''}</span></td>
+            <td>${(c.object || '—').slice(0,90)}<br><span style="color:var(--mut);font-size:11px">${c.entity ?? ''}${c.sign_date?` · ${c.sign_date}`:''}</span>${(c.specs&&c.specs.length)?`<br>${c.specs.map(x=>`<span class="spec">${x}</span>`).join('')}`:''}</td>
             <td>${cop(c.value)}</td>
             <td style="text-align:right">${c.estimated_quantity ?? '—'}</td>
             <td style="text-align:right">${c.estimated_unit_price!=null?cop(c.estimated_unit_price):'—'}</td>
@@ -266,7 +273,7 @@
 
   <!-- Asesor Comercial: chat conversacional (n8n Agent → API SECOP) -->
   <script type="module">
-    import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+    import { createChat } from '/vendor/chat.bundle.es.js';
     createChat({
       webhookUrl: 'https://n8n.jyrmecatronica.com/webhook/secop-asesor-foton/chat',
       mode: 'window',

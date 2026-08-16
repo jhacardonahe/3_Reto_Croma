@@ -231,6 +231,7 @@ export interface OpportunityResult {
   line_confidence: number;
   estimated_quantity: number | null; // cantidad estimada del texto (aprox., no oficial)
   estimated_unit_price: number | null; // valor estimado / cantidad
+  specs: string[]; // especificaciones generales del texto (aprox., no oficial)
   scoring: ScoreBreakdown;
   alerts: string[];
   secop_link: string | null;
@@ -248,6 +249,7 @@ export interface CompetitorContract {
   status: string | null;
   estimated_quantity: number | null;
   estimated_unit_price: number | null;
+  specs: string[];
 }
 
 export interface CompetitorAnalysis {
@@ -278,6 +280,8 @@ export interface ContractTracking {
   found: boolean;
   entity: string | null;
   value: number | null;
+  estimated_process_value: number | null; // base_price del proceso (valor estimado)
+  price_gap: number | null; // (valor_contrato − estimado) / estimado; negativo = bajo el estimado
   status: {
     contract_status: string | null;
     execution_percentage: number | null;
