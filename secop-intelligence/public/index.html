@@ -196,6 +196,44 @@
     <div id="mout"></div>
   </main>
 
+  <div class="bar" style="border-top:1px solid #23304f; margin-top:12px">
+    <div style="flex-basis:100%"><h2 class="sec">📉 Histórico · oportunidades que ya cerraron</h2>
+      <div style="color:var(--mut);font-size:12px">La demanda que ya pasó: procesos de vehículos Foton adjudicados/cerrados que el monitoreo en vivo no muestra. Clasificado por el objeto del proceso; valor = precio base (campos reales de Croma, barrido liviano sin llamada de detalle).</div>
+    </div>
+    <div>
+      <label>Línea</label>
+      <select id="hline">
+        <option value="">Todas</option>
+        <option>NEW_ENERGY_PICKUP</option>
+        <option>PICKUP_MHEV</option>
+        <option>PICKUP</option>
+        <option>NEW_ENERGY</option>
+        <option>AUV_VAN</option>
+        <option>LDT</option>
+        <option>HDT</option>
+        <option>SPECIAL</option>
+      </select>
+    </div>
+    <div>
+      <label>Desde</label>
+      <input id="hfrom" size="10" value="2024-01-01" placeholder="yyyy-mm-dd" />
+    </div>
+    <div>
+      <label>Hasta</label>
+      <input id="hto" size="10" placeholder="hoy" />
+    </div>
+    <div>
+      <label>Palabra clave</label>
+      <input id="hkw" size="12" placeholder="blindada, vans…" />
+    </div>
+    <button id="hgo">Ver histórico</button>
+  </div>
+
+  <main>
+    <div class="meta" id="hmeta">Barre el histórico de las entidades configuradas y lista lo que ya cerró. Pulsa <b>Ver histórico</b> (la primera corrida puede tardar por el rate-limit de Croma).</div>
+    <div id="hout"></div>
+  </main>
+
   <aside id="trace">
     <h2>🔎 Trazabilidad en vivo</h2>
     <p class="t-sub">Cada dato del tablero se traza a su origen en Croma. Aquí ves, paso a paso, cómo se construye la evidencia y qué queda confirmado contra la fuente oficial.</p>
@@ -403,6 +441,62 @@
       }
     }
     $('mgo').onclick = loadMarket;
+
+    // --- Histórico: oportunidades que ya cerraron (retrospectiva) -----------
+    async function loadRetro() {
+      const p = new URLSearchParams();
+      if ($('hline').value) p.set('line', $('hline').value);
+      if ($('hfrom').value.trim()) p.set('from_date', $('hfrom').value.trim());
+      if ($('hto').value.trim()) p.set('to_date', $('hto').value.trim());
+      if ($('hkw').value.trim()) p.set('keyword', $('hkw').value.trim());
+      $('hgo').disabled = true; $('hmeta').textContent = 'Barriendo el histórico en Croma… (la primera corrida puede tardar)'; $('hout').innerHTML = '';
+      try {
+        const r = await fetch('/api/retrospective?' + p.toString());
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Error');
+        const cards = [
+          ['Valor total (cerrado)', cop(d.total_value)],
+          ['Oportunidades', d.closed_opportunities ?? 0],
+          ['Desiertas', d.void_count ?? 0],
+          ['Entidades barridas', d.entities_scanned ?? 0],
+        ];
+        const lineRows = Object.entries(d.by_line || {}).sort((a, b) => (b[1].value || 0) - (a[1].value || 0))
+          .map(([k, v]) => `<tr><td class="line">${k}</td><td>${v.count}</td><td>${cop(v.value)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">—</td></tr>';
+        const entRows = Object.entries(d.by_entity || {}).sort((a, b) => (b[1].value || 0) - (a[1].value || 0))
+          .map(([nit, v]) => `<tr><td>${v.name ?? '—'}<br><span style="color:var(--mut);font-size:11px">${nit}</span></td><td>${v.count}</td><td>${cop(v.value)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">—</td></tr>';
+        const rows = (d.opportunities || []).map((o) => `
+          <tr>
+            <td class="line">${o.foton_line}</td>
+            <td>${(o.object || '—').slice(0,90)}<br><span style="color:var(--mut);font-size:11px">${o.entity ?? ''}${o.entity_nit ? ` · ${o.entity_nit}` : ''}</span>${(o.specs && o.specs.length) ? `<br>${o.specs.map((x) => `<span class="spec">${x}</span>`).join('')}` : ''}</td>
+            <td>${cop(o.value)}</td>
+            <td style="text-align:right">${o.estimated_quantity != null ? `${o.estimated_quantity} u · ${cop(o.estimated_unit_price)}` : '—'}</td>
+            <td>${o.void ? '<span class="pill hi">desierto</span>' : `<span class="pill">${o.status ?? '—'}</span>`}<br><span style="color:var(--mut);font-size:11px">${o.published_date ?? ''}</span></td>
+            <td>${o.url ? `<a href="${o.url}" target="_blank">SECOP↗</a><br>` : ''}<span style="color:var(--mut);font-size:10.5px">${o.notice_uid}</span></td>
+          </tr>`).join('') || '<tr><td colspan="6" class="empty">Sin oportunidades cerradas para esos filtros.</td></tr>';
+        const f = d.filters || {};
+        const chips = [f.line && `línea: ${f.line}`, f.keyword && `“${f.keyword}”`].filter(Boolean).join(' · ');
+        $('hmeta').innerHTML = `Ventana <b>${d.window.from} → ${d.window.to}</b> · procesos <b>${d.processes_seen}</b> (${d.pages_fetched} pág.) · cerradas <b>${d.closed_opportunities}</b>${chips ? ` · <span style="color:var(--acc)">${chips}</span>` : ''}`;
+        $('hout').innerHTML = `
+          <div class="cards">${cards.map(([k, v]) => `<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
+          <div class="grid2">
+            <div>
+              <div class="subh">Por línea Foton</div>
+              <table><thead><tr><th>Línea</th><th>#</th><th>Valor</th></tr></thead><tbody>${lineRows}</tbody></table>
+            </div>
+            <div>
+              <div class="subh">Por entidad compradora</div>
+              <table><thead><tr><th>Entidad</th><th>#</th><th>Valor</th></tr></thead><tbody>${entRows}</tbody></table>
+            </div>
+          </div>
+          <div class="subh" style="margin-top:18px">Oportunidades cerradas <span style="color:var(--mut);text-transform:none;letter-spacing:0">(cantidad/unitario estimados del texto — aprox., no oficial)</span></div>
+          <table><thead><tr><th>Línea</th><th>Objeto / entidad</th><th>Valor</th><th style="text-align:right">Cant./Unit.</th><th>Estado</th><th>Fuente</th></tr></thead><tbody>${rows}</tbody></table>`;
+      } catch (e) {
+        $('hmeta').textContent = '⚠️ ' + e.message;
+      } finally {
+        $('hgo').disabled = false;
+      }
+    }
+    $('hgo').onclick = loadRetro;
   </script>
 
   <!-- Asesor Comercial: chat conversacional (n8n Agent → API SECOP) -->

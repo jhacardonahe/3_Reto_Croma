@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { runMonitoring } from '../modules/monitoring.js';
 import { analyzeCompetitor } from '../modules/competitive.js';
 import { analyzeMarket } from '../modules/market.js';
+import { analyzeRetrospective } from '../modules/retrospective.js';
 import { trackContract, trackContractWithSanctions } from '../modules/tracking.js';
 import { opportunitiesToCsv } from '../utils/csv-export.js';
 import { croma } from '../croma/client.js';
@@ -138,6 +139,25 @@ export async function getMarket(req: Request, res: Response): Promise<void> {
       maxDetailLookups: num(req.query.max_detail),
     });
     res.json(analysis);
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
+/** Retrospectiva: oportunidades de vehículos Foton que YA CERRARON (histórico 2024→hoy). */
+export async function getRetrospective(req: Request, res: Response): Promise<void> {
+  try {
+    const result = await analyzeRetrospective({
+      entityNits: parseList(req.query.entity_nits),
+      fromDate: str(req.query.from_date) || undefined,
+      toDate: str(req.query.to_date) || undefined,
+      minPrice: num(req.query.min_price),
+      maxPages: num(req.query.max_pages),
+      line: str(req.query.line ?? req.query.segment) || undefined,
+      department: str(req.query.department) || undefined,
+      keyword: str(req.query.keyword) || undefined,
+    });
+    res.json(result);
   } catch (err) {
     fail(res, err);
   }
