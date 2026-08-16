@@ -44,7 +44,9 @@ export async function trackContract(contractId: string): Promise<ContractTrackin
       const base = proc.found ? proc.process?.base_price ?? null : null;
       if (base && base > 0) {
         estimatedProcessValue = base;
-        priceGap = Math.round(((c.value - base) / base) * 1000) / 1000; // ratio, 3 decimales
+        // Solo comparable si el contrato cubre buena parte del estimado; si es una fracción
+        // pequeña, el proceso es multi-lote y el gap no sería comparable → se deja null.
+        if (c.value / base >= 0.4) priceGap = Math.round(((c.value - base) / base) * 1000) / 1000;
       }
     } catch {
       /* no rompe el tracking si falla el proceso */
