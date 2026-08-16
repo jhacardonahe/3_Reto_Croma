@@ -12,6 +12,7 @@ export interface MarketOptions {
   department?: string; // departamento de la entidad
   keyword?: string; // palabra clave en el objeto
   maxDetailLookups?: number; // tope de detalles por corrida (control de costo/rate-limit)
+  detailConcurrency?: number; // detalles en vuelo a la vez (default 5)
 }
 
 function fold(s: string | null | undefined): string {
@@ -74,18 +75,30 @@ export async function analyzeMarket(opts: MarketOptions = {}): Promise<MarketAna
   // contribuyan y no se agote en la primera (que puede tener muchas motos/embarcaciones).
   const perEntity = Math.max(6, Math.ceil(maxDetail / targetNits.length));
 
-  outer: for (const nit of targetNits) {
-    const res = await croma.processesByEntity(nit, fromDate, toDate).catch(() => null);
-    if (!res) continue;
-    const candidates = res.processes.filter(isAwardedVehicle);
-    processesSeen += res.processes.length;
+  // 1) Listas de procesos por entidad EN PARALELO (cada una es una llamada Croma; el
+  //    RateLimiter del cliente garantiza el techo por minuto aunque vayan en vuelo).
+  const lists = await Promise.all(
+    targetNits.map(async (nit) => ({ nit, res: await croma.processesByEntity(nit, fromDate, toDate).catch(() => null) })),
+  );
 
-    let entityLookups = 0;
-    for (const cand of candidates) {
-      if (detailLookups >= maxDetail) break outer;
-      if (entityLookups >= perEntity) break;
+  // 2) Aplana candidatos respetando el presupuesto por entidad (breadth) con un slice.
+  const tasks: { nit: string; cand: ProcessSummary }[] = [];
+  for (const { nit, res } of lists) {
+    if (!res) continue;
+    processesSeen += res.processes.length;
+    for (const cand of res.processes.filter(isAwardedVehicle).slice(0, perEntity)) tasks.push({ nit, cand });
+  }
+
+  // 3) Detalle EN PARALELO con concurrencia acotada + reserva ATÓMICA del tope global
+  //    (sin await entre el check y el ++). Muta rows/seenContract tras el await: seguro
+  //    por ser monohilo. Sustituye el barrido secuencial (uno tras otro) anterior.
+  const concurrency = Math.max(1, opts.detailConcurrency ?? 5);
+  let cursor = 0;
+  async function detailWorker(): Promise<void> {
+    for (;;) {
+      if (detailLookups >= maxDetail || cursor >= tasks.length) return;
+      const { nit, cand } = tasks[cursor++];
       detailLookups++;
-      entityLookups++;
       const detail = await croma.process(cand.notice_uid).catch(() => null);
       if (!detail || !detail.found) continue;
       const department = (detail.process?.entity_department as string | undefined) ?? null;
@@ -117,6 +130,7 @@ export async function analyzeMarket(opts: MarketOptions = {}): Promise<MarketAna
       }
     }
   }
+  await Promise.all(Array.from({ length: concurrency }, () => detailWorker()));
 
   // Filtros post-recolección.
   const filtered = rows.filter((r) => {

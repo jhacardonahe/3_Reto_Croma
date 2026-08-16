@@ -15,6 +15,7 @@ export interface MonitorOptions {
   limit?: number; // top N a devolver (default 50)
   minScore?: number; // umbral (default 40)
   maxDetailLookups?: number; // tope de llamadas de detalle por corrida (control de costo)
+  detailConcurrency?: number; // llamadas de detalle en vuelo a la vez (default 5)
   // --- filtros de búsqueda (opcionales) ---
   segments?: string[]; // filtrar por línea Foton (p.ej. ['PICKUP_MHEV','NEW_ENERGY'])
   department?: string; // filtrar por departamento de la entidad (acento-insensible, substring)
@@ -100,20 +101,20 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
   let verified = 0;
   let partial = 0;
   const opportunities: OpportunityResult[] = [];
-  for (const cand of candidates) {
-    if (detailLookups >= maxDetail) break;
-    emit({ type: 'progress', done: detailLookups, total: candidates.length });
 
+  // Resuelve UN candidato: detalle Croma → clasifica → filtra → puntúa → guard de citas.
+  // Muta el estado compartido (opportunities/verified/partial/failedLookups) tras el await;
+  // es seguro porque JS es monohilo: las mutaciones ocurren de forma síncrona al reanudar.
+  async function processCandidate(cand: { summary: ProcessSummary; entity: EntityConfig; frequency: number }): Promise<void> {
     // Detalle para obtener descripción + fecha de cierre (el resumen no las trae).
     // Un fallo puntual de Croma (502/timeout) no debe abortar toda la corrida: se salta.
-    detailLookups++;
     let header: Awaited<ReturnType<typeof croma.process>>['process'] = null;
     try {
       const detail = await croma.process(cand.summary.notice_uid);
       header = detail.found ? detail.process : null;
     } catch (err) {
       failedLookups++;
-      continue;
+      return;
     }
 
     const object =
@@ -122,16 +123,16 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
       `${cand.summary.contract_type ?? ''} ${cand.summary.reference ?? ''}`.trim();
 
     const classification = classifyFotonLine(`${object} ${cand.summary.contract_type ?? ''}`);
-    if (classification.line === 'UNKNOWN') continue;
+    if (classification.line === 'UNKNOWN') return;
 
     // --- filtros de búsqueda (post-detalle, sobre datos ya resueltos) ---
-    if (opts.segments?.length && !opts.segments.includes(classification.line)) continue;
+    if (opts.segments?.length && !opts.segments.includes(classification.line)) return;
     const department = header?.entity_department ?? null;
     const city = header?.entity_city ?? null;
-    if (opts.department && !fold(department).includes(fold(opts.department))) continue;
+    if (opts.department && !fold(department).includes(fold(opts.department))) return;
     if (opts.keyword) {
       const hay = fold(`${object} ${cand.summary.entity ?? ''} ${department ?? ''} ${city ?? ''}`);
-      if (!hay.includes(fold(opts.keyword))) continue;
+      if (!hay.includes(fold(opts.keyword))) return;
     }
 
     const estimatedValue = header?.base_price ?? cand.summary.base_price ?? null;
@@ -144,7 +145,7 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
       entityPurchaseFrequency: cand.frequency,
       classification,
     });
-    if (scoring.total < minScore) continue;
+    if (scoring.total < minScore) return;
 
     const opp: OpportunityResult = {
       notice_uid: cand.summary.notice_uid,
@@ -205,6 +206,26 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
       },
     });
   }
+
+  // Fase de detalle PARALELIZADA con concurrencia acotada. El RateLimiter del cliente
+  // garantiza el techo por minuto aunque haya varias llamadas en vuelo, así que la
+  // corrección se mantiene y la corrida en frío es ~concurrencia veces más rápida.
+  // El tope `maxDetail` se RESERVA de forma atómica (síncrona, antes del await) para no
+  // pasarse; el orden de los eventos deja de ser determinista (el panel los pinta como
+  // llegan), lo cual es aceptable.
+  const concurrency = Math.max(1, opts.detailConcurrency ?? 5);
+  let cursor = 0;
+  async function worker(): Promise<void> {
+    for (;;) {
+      // reserva atómica: sin await entre el check del tope y el ++ (monohilo ⇒ indivisible)
+      if (detailLookups >= maxDetail || cursor >= candidates.length) return;
+      const cand = candidates[cursor++];
+      detailLookups++;
+      emit({ type: 'progress', done: detailLookups, total: candidates.length });
+      await processCandidate(cand);
+    }
+  }
+  await Promise.all(Array.from({ length: concurrency }, () => worker()));
 
   emit({ type: 'stage', key: 'detail', status: 'done' });
   emit({ type: 'stage', key: 'classify', status: 'done' });

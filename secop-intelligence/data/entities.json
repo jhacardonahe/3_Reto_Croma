@@ -36,6 +36,15 @@
       "verified": true,
       "verified_at": "2026-08-15",
       "note": "15 matches; predominan mantenimiento y administración delegada del parque automotor. Menor volumen de adquisición pura."
+    },
+    {
+      "nit": "899999114",
+      "name": "Departamento de Cundinamarca",
+      "type": "department",
+      "priority": "high",
+      "verified": true,
+      "verified_at": "2026-08-16",
+      "note": "Compradora de flota verificada (secop_processes_by_entity, ventana 2025+): 'COMPRAVENTA PARQUE AUTOMOTOR' $2.70B y 'ADQUISICIÓN DE VEHÍCULOS ESPECIALES (NECROMOVIL)' $2.67B (seleccionado/adjudicado) + $557M municipio de Silvania. Adquisición pura de alto ticket. Descartadas en la misma sesión (0 adquisiciones de vehículos en la ventana): Agencia Logística FFMM 899999162 (solo mantenimiento), Valle/Sec. Paz 890399029, Santander 890201235."
     }
   ]
 }
