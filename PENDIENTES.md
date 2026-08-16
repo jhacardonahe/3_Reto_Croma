@@ -1,6 +1,6 @@
 # PENDIENTES — Reto Croma (SECOP Intelligence)
 
-> Lista para retomar el proyecto. Actualizado: **2026-08-15**.
+> Lista para retomar el proyecto. Actualizado: **2026-08-16**.
 > ⏰ **CIERRE DE ENTREGA: 16 de agosto de 2026, 6:30 p. m.** (formulario de Croma)
 
 ---
@@ -113,7 +113,11 @@ Documento-norte del reto: `RETO.md`
 
 ## 🔧 Pendientes técnicos (en orden de impacto)
 
-- [ ] **🔎 REVISAR ANTES DE DESPLEGAR — posibles cambios de procesos en paralelo.** Otras sesiones
+- [x] **🔎 REVISAR ANTES DE DESPLEGAR — posibles cambios de procesos en paralelo.** ✅ HECHO (2026-08-16):
+      verificación de integridad completa — HEAD contiene INTACTO el panel SSE (`streamOpportunities`,
+      ruta `/api/opportunities/stream`, `onEvent`/`MonitorEvent`, `id="trace"`); gate `typecheck`+`build`+
+      `eval` **11/11** en verde; `PENDIENTES.md`+`nginx-autodata.conf` commiteados (`de2801c`); market no
+      rompió nada compartido. Redeploy hecho y verificado. *(contexto histórico abajo)* Otras sesiones
       trabajaron el árbol a la vez (trabajo de "mercado": commits `6d9ad37`…`c9cbe14`) y **committearon
       también mis cambios del panel SSE** — `git status` solo mostró `PENDIENTES.md` y
       `deploy/nginx-autodata.conf` sin commitear. **Quedó a medias la verificación de integridad**
@@ -140,7 +144,10 @@ Documento-norte del reto: `RETO.md`
       (el rate-limit, no la latencia, es el cuello); el beneficio se nota en corridas tibias/parciales.
       Verificado e2e: DILOF 500→102→60 (0 fallidos)→3 oportunidades, guard 5/5 OK en las tres.
 
-- [ ] **🐞 `/api/market` devuelve TODO EN CERO en producción** (verificado e2e 2026-08-16, 02:05).
+- [x] **🐞 `/api/market` devuelve TODO EN CERO** — RESUELTO (`c9cbe14`) y **RE-VERIFICADO en producción
+      2026-08-16** tras el redeploy que tocó `market.ts`: HTTP 200, 2 contratos reales $6.8B (EPIA SAS +
+      AUTOMAYOR, `contract_id` CO1.PCCNTR.9546483/.9547105, DILOF). La paralelización no lo rompió.
+      *(diagnóstico histórico abajo)* (verificado e2e 2026-08-16, 02:05).
       Corrida real contra el VPS: `http=200`, `t=208s`, **detail_lookups=40 pero contracts=0**,
       total_value $0, providers 0, sectores/proveedores/entidades vacíos.
       - **Dónde:** `src/modules/market.ts` → `analyzeMarket`. Flujo: por cada NIT `processesByEntity`
@@ -180,15 +187,17 @@ Documento-norte del reto: `RETO.md`
       ✅ **DESPLEGADO 2026-08-16**: `deploy-vps.sh` corrido; health remoto reporta `entities:5`, servicio
       `active`+`enabled`, HTTPS OK. Cundinamarca + la paralelización YA están en producción.
 
-- [ ] **Conseguir 3–5 NITs de entidades que SÍ compran vehículos** y verificarlos con Croma
-      (`secop_processes_by_entity`). Candidatos: gobernaciones, alcaldías grandes, Policía Nacional,
-      Ejército, INVÍAS, empresas de servicios públicos. *La UdeA no compra camionetas → 0 matches.*
-- [ ] **Correr monitoreo sobre una entidad compradora real** para obtener oportunidades positivas
-      clasificadas (esto es lo que luce en el video/demo).
-- [ ] **Verificar y cargar NITs reales de competidores** en `data/competitors.json`
+- [~] **Conseguir 3–5 NITs de entidades que SÍ compran vehículos** — 5 cargadas y verificadas
+      (DILOF, Antioquia, INVÍAS, Distrito CT+i Medellín, Cundinamarca). Se puede seguir sumando
+      alcaldías capitales / gobernaciones (ver ítem 📈). *La UdeA no compra camionetas → 0 matches.*
+- [x] **Correr monitoreo sobre una entidad compradora real** — HECHO varias veces; DILOF produce
+      3 oportunidades reales clasificadas (PICKUP_MHEV score 69, AUV_VAN 67.5), guard 5/5 OK.
+- [ ] **Verificar y cargar NITs reales de competidores OEM** en `data/competitors.json`
       (Toyota, Nissan, Ford, Isuzu, Mitsubishi, GWM, JMC — importadores en Colombia).
       Fuente de apoyo: docs de competencia en el proyecto Formación-Tunland (uso interno).
-- [ ] **Actualizar `data/entities.json`** con los NITs verificados (hoy son ejemplos "verificar").
+      *(Hoy hay 2 competidores REALES derivados de contratos: AUTOMAYOR + EPIA SAS.)*
+- [x] **Actualizar `data/entities.json`** con NITs verificados — hecho; las 5 entidades son reales
+      y verificadas en vivo contra Croma (ya no hay ejemplos "verificar").
 - [ ] (Opcional) Enriquecer keywords del clasificador con la línea Tunland (G7/G9/V7/V9/eTunland, MHEV).
 - [ ] (Roadmap) `price_gap` competitivo: cruzar valor de contrato vs. valor estimado del proceso.
 - [ ] (Opcional) Cablear webhook N8N apuntando a `GET /api/opportunities` en un schedule.
@@ -199,7 +208,8 @@ Documento-norte del reto: `RETO.md`
 
 - [ ] **[OBLIGATORIO] Integrantes del equipo** — cada persona: correo registrado en Luma + WhatsApp.
 - [ ] **[OBLIGATORIO] Video de 1 minuto** — problema → solución → demo.
-- [ ] **[RECOMENDADO] Link al producto desplegado** — falta **deploy** (Render / Railway / Fly.io).
+- [x] **[RECOMENDADO] Link al producto desplegado** — ✅ **https://autodata.jyrmecatronica.com**
+      (VPS Hetzner, systemd + nginx + HTTPS Let's Encrypt). Al día con la última versión.
 - [ ] **[OPCIONAL] Presentación**.
 - [x] **[OPCIONAL] Repositorio público** — listo.
 - [ ] **Enviar el formulario de entrega** antes del cierre.
