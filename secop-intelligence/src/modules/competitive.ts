@@ -28,7 +28,8 @@ const VEH_NOUN = 'camionetas?|veh[ií]culos?|camiones?|cami[oó]n|vans?|furgones
  * cantidad ni precio unitario como dato estructurado (viven en los pliegos PDF).
  */
 function estimateUnits(object: string | null, value: number | null): { estimated_quantity: number | null; estimated_unit_price: number | null } {
-  const re = new RegExp(`(\\d{1,4})\\s+(?:${VEH_NOUN})`, 'gi');
+  // Capta "5 camionetas", "(5) vehículos", "Cinco (5) camionetas", "5) camiones".
+  const re = new RegExp(`\\(?(\\d{1,4})\\)?\\s+(?:${VEH_NOUN})`, 'gi');
   let qty = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(object ?? '')) !== null) qty += Number(m[1]);
