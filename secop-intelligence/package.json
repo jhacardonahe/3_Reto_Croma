@@ -10,6 +10,7 @@
     "start": "node dist/index.js",
     "monitor": "tsx src/cli/monitor.ts",
     "demo": "tsx src/cli/demo.ts",
+    "eval": "tsx src/cli/eval.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -40,6 +40,29 @@ Documento-norte del reto: `RETO.md`
   todos 200 con datos reales de Croma.
 - **`data/demo-run.json` generado** (respaldo salvavidas §11 con salidas reales de los 3 endpoints núcleo).
 
+### ✅ Cerrado 2026-08-16 (guard de citas — práctica traída de agentsprint-weg)
+- **Guard de citas determinista** en `src/utils/verify.ts`: cada dato afirmado de una
+  oportunidad (notice_uid, NIT, valor, cierre, publicación) se compara contra el payload
+  CRUDO de Croma (summary+header) antes de emitir. Cero llamadas a modelo, tolerancia 2%.
+  Los campos "aprox." (cantidad/unitario/specs) NO se verifican — se rotulan como estimación.
+- Campo `verification` añadido a `OpportunityResult`; se calcula en `monitoring.ts` (datos reales)
+  y en `demo.ts` (offline). **Chip "✓ Verificado N/N · Croma"** en el dashboard con tooltip por dato.
+- **Control negativo pasado**: bloquea valor fabricado (ok:false, señala "Valor estimado"),
+  bloquea notice_uid sin ancla, acepta redondeo dentro del 2%. typecheck + build limpios.
+- Cierra la regla #1 de AGENTS.md ("ninguna afirmación sin cita") → refuerza criterio *Uso de Croma*.
+
+### ✅ Cerrado 2026-08-16 (2 extensiones del guard)
+- **Guard de agregados para competidor** (`verifyCompetitor` en `verify.ts`): recompone la suma
+  sobre el set CRUDO completo y verifica que cada peso venga de un contrato con `contract_id`
+  citable. Campo `verification` en `CompetitorAnalysis` + chip en la cabecera de la sección.
+  **E2E real:** AUTOMAYOR `860034604` → "6 contratos citados (6/6 con ID Croma) · suma verificada",
+  $3.33B, con los contract_id reales en el tooltip. Controles negativos OK (bloquea contrato sin ID
+  y suma que no cuadra).
+- **Eval harness offline** `npm run eval` (`src/cli/eval.ts` + `data/golden.json`, 11 casos):
+  clasificador (5 líneas) + trampas (`trap-udea-editorial` real de Croma, `trap-aseo` → UNKNOWN) +
+  controles negativos del guard (valor fabricado / sin fuente → deben bloquear). **11/11 pasan**;
+  sale con exit≠0 si algo falla → sirve de GATE antes de desplegar. Corre sin CROMA_API_KEY.
+
 ---
 
 ## 🤖 Asesor Comercial (agente n8n + widget) — EN PRODUCCIÓN (2026-08-15)

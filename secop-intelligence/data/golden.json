@@ -1,0 +1,83 @@
+{
+  "_note": "Set dorado del núcleo determinista (clasificador + guard de citas). Corre OFFLINE, sin CROMA_API_KEY, igual que el harness de agentsprint. Mezcla obligatoria: casos de dato concreto, trampas (debe_rechazar) y controles negativos del guard (deben fallar; si pasan, el guard se rompió).",
+  "cases": [
+    {
+      "id": "clf-new-energy-pickup",
+      "kind": "classify",
+      "object": "Adquisición de 3 camionetas eléctricas doble cabina cero emisiones para el parque automotor",
+      "expect_line": "NEW_ENERGY_PICKUP"
+    },
+    {
+      "id": "clf-pickup-mhev",
+      "kind": "classify",
+      "object": "Compraventa de camioneta híbrida (MHEV) para supervisión de redes de energía",
+      "expect_line": "PICKUP_MHEV"
+    },
+    {
+      "id": "clf-pickup-diesel",
+      "kind": "classify",
+      "object": "Suministro de camionetas pick-up 4x4 diésel doble cabina para la Secretaría de Movilidad",
+      "expect_line": "PICKUP"
+    },
+    {
+      "id": "clf-ldt-camion",
+      "kind": "classify",
+      "object": "Adquisición de camión de estacas y volqueta para transporte de carga y residuos",
+      "expect_line": "LDT"
+    },
+    {
+      "id": "clf-auv-van",
+      "kind": "classify",
+      "object": "Suministro de furgón medicalizado y microbús para transporte de pacientes",
+      "expect_line": "AUV_VAN"
+    },
+    {
+      "id": "trap-udea-editorial",
+      "kind": "classify",
+      "object": "Servicio Especializado de Diagramación Editorial para la Edición No. 105 de la revista Lecturas de Economía",
+      "expect_line": "UNKNOWN",
+      "trap": true,
+      "nota": "Registro REAL de Croma (CO1.NTC.10710152). La UdeA compra servicios, no vehículos → NO debe entrar como oportunidad."
+    },
+    {
+      "id": "trap-aseo",
+      "kind": "classify",
+      "object": "Prestación de servicios de aseo y cafetería para las instalaciones administrativas",
+      "expect_line": "UNKNOWN",
+      "trap": true
+    },
+    {
+      "id": "guard-ok-exacto",
+      "kind": "guard",
+      "claim_value": 450000000,
+      "croma_value": 450000000,
+      "expect_ok": true
+    },
+    {
+      "id": "guard-ok-redondeo",
+      "kind": "guard",
+      "claim_value": 449000000,
+      "croma_value": 450000000,
+      "expect_ok": true,
+      "nota": "Dentro de la tolerancia 2% (redondeo de valor de catálogo)."
+    },
+    {
+      "id": "ctrl-neg-valor-fabricado",
+      "kind": "guard",
+      "claim_value": 999000000,
+      "croma_value": 450000000,
+      "expect_ok": false,
+      "trap": true,
+      "nota": "Control negativo: valor afirmado que Croma no respalda. El guard DEBE bloquear."
+    },
+    {
+      "id": "ctrl-neg-valor-sin-fuente",
+      "kind": "guard",
+      "claim_value": 120000000,
+      "croma_value": null,
+      "expect_ok": false,
+      "trap": true,
+      "nota": "Control negativo: se afirma un valor sin nada en la evidencia de Croma."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "_note": "Demo del motor de clasificación/scoring/alertas. Objetos representativos de SECOP + 1 registro REAL de Croma (CO1.NTC.10710152, correctamente filtrado como UNKNOWN). La conectividad en vivo con Croma se probó por separado: 1.869 procesos reales de la UdeA recuperados el 2026-08-15.",
-  "timestamp": "2026-08-16T06:11:05.992Z",
+  "timestamp": "2026-08-16T06:24:11.030Z",
   "total_processed": 6,
   "filtered_unknown": 1,
   "total_count": 5,
@@ -37,7 +37,52 @@
         "repeated_buyer",
         "new_energy_segment"
       ],
-      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO001"
+      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO001",
+      "verification": {
+        "ok": true,
+        "checked": 5,
+        "confirmed": 5,
+        "detail": "5/5 datos confirmados contra Croma",
+        "checks": [
+          {
+            "field": "notice_uid",
+            "label": "Proceso (notice_uid)",
+            "claimed": "CO1.NTC.DEMO001",
+            "source": "CO1.NTC.DEMO001",
+            "status": "confirmed"
+          },
+          {
+            "field": "entity_nit",
+            "label": "NIT de la entidad",
+            "claimed": "890900286",
+            "source": "890900286",
+            "status": "confirmed"
+          },
+          {
+            "field": "estimated_value",
+            "label": "Valor estimado",
+            "claimed": 450000000,
+            "source": 450000000,
+            "status": "confirmed"
+          },
+          {
+            "field": "closing_date",
+            "label": "Fecha de cierre",
+            "claimed": "2026-08-26",
+            "source": "2026-08-26",
+            "status": "confirmed"
+          },
+          {
+            "field": "publication_date",
+            "label": "Fecha de publicación",
+            "claimed": "2026-08-16",
+            "source": "2026-08-16",
+            "status": "confirmed"
+          }
+        ],
+        "source_ref": "CO1.NTC.DEMO001",
+        "source_url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO001"
+      }
     },
     {
       "notice_uid": "CO1.NTC.DEMO002",
@@ -70,7 +115,52 @@
         "high_value",
         "repeated_buyer"
       ],
-      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO002"
+      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO002",
+      "verification": {
+        "ok": true,
+        "checked": 5,
+        "confirmed": 5,
+        "detail": "5/5 datos confirmados contra Croma",
+        "checks": [
+          {
+            "field": "notice_uid",
+            "label": "Proceso (notice_uid)",
+            "claimed": "CO1.NTC.DEMO002",
+            "source": "CO1.NTC.DEMO002",
+            "status": "confirmed"
+          },
+          {
+            "field": "entity_nit",
+            "label": "NIT de la entidad",
+            "claimed": "890905211",
+            "source": "890905211",
+            "status": "confirmed"
+          },
+          {
+            "field": "estimated_value",
+            "label": "Valor estimado",
+            "claimed": 520000000,
+            "source": 520000000,
+            "status": "confirmed"
+          },
+          {
+            "field": "closing_date",
+            "label": "Fecha de cierre",
+            "claimed": "2026-09-25",
+            "source": "2026-09-25",
+            "status": "confirmed"
+          },
+          {
+            "field": "publication_date",
+            "label": "Fecha de publicación",
+            "claimed": "2026-08-16",
+            "source": "2026-08-16",
+            "status": "confirmed"
+          }
+        ],
+        "source_ref": "CO1.NTC.DEMO002",
+        "source_url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO002"
+      }
     },
     {
       "notice_uid": "CO1.NTC.DEMO003",
@@ -102,7 +192,52 @@
         "repeated_buyer",
         "pickup_mhev"
       ],
-      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO003"
+      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO003",
+      "verification": {
+        "ok": true,
+        "checked": 5,
+        "confirmed": 5,
+        "detail": "5/5 datos confirmados contra Croma",
+        "checks": [
+          {
+            "field": "notice_uid",
+            "label": "Proceso (notice_uid)",
+            "claimed": "CO1.NTC.DEMO003",
+            "source": "CO1.NTC.DEMO003",
+            "status": "confirmed"
+          },
+          {
+            "field": "entity_nit",
+            "label": "NIT de la entidad",
+            "claimed": "890904996",
+            "source": "890904996",
+            "status": "confirmed"
+          },
+          {
+            "field": "estimated_value",
+            "label": "Valor estimado",
+            "claimed": 180000000,
+            "source": 180000000,
+            "status": "confirmed"
+          },
+          {
+            "field": "closing_date",
+            "label": "Fecha de cierre",
+            "claimed": "2026-08-28",
+            "source": "2026-08-28",
+            "status": "confirmed"
+          },
+          {
+            "field": "publication_date",
+            "label": "Fecha de publicación",
+            "claimed": "2026-08-16",
+            "source": "2026-08-16",
+            "status": "confirmed"
+          }
+        ],
+        "source_ref": "CO1.NTC.DEMO003",
+        "source_url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO003"
+      }
     },
     {
       "notice_uid": "CO1.NTC.DEMO005",
@@ -134,7 +269,52 @@
         "high_value",
         "repeated_buyer"
       ],
-      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO005"
+      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO005",
+      "verification": {
+        "ok": true,
+        "checked": 5,
+        "confirmed": 5,
+        "detail": "5/5 datos confirmados contra Croma",
+        "checks": [
+          {
+            "field": "notice_uid",
+            "label": "Proceso (notice_uid)",
+            "claimed": "CO1.NTC.DEMO005",
+            "source": "CO1.NTC.DEMO005",
+            "status": "confirmed"
+          },
+          {
+            "field": "entity_nit",
+            "label": "NIT de la entidad",
+            "claimed": "890981536",
+            "source": "890981536",
+            "status": "confirmed"
+          },
+          {
+            "field": "estimated_value",
+            "label": "Valor estimado",
+            "claimed": 240000000,
+            "source": 240000000,
+            "status": "confirmed"
+          },
+          {
+            "field": "closing_date",
+            "label": "Fecha de cierre",
+            "claimed": "2026-09-03",
+            "source": "2026-09-03",
+            "status": "confirmed"
+          },
+          {
+            "field": "publication_date",
+            "label": "Fecha de publicación",
+            "claimed": "2026-08-16",
+            "source": "2026-08-16",
+            "status": "confirmed"
+          }
+        ],
+        "source_ref": "CO1.NTC.DEMO005",
+        "source_url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO005"
+      }
     },
     {
       "notice_uid": "CO1.NTC.DEMO004",
@@ -162,7 +342,52 @@
       "alerts": [
         "high_value"
       ],
-      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO004"
+      "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO004",
+      "verification": {
+        "ok": true,
+        "checked": 5,
+        "confirmed": 5,
+        "detail": "5/5 datos confirmados contra Croma",
+        "checks": [
+          {
+            "field": "notice_uid",
+            "label": "Proceso (notice_uid)",
+            "claimed": "CO1.NTC.DEMO004",
+            "source": "CO1.NTC.DEMO004",
+            "status": "confirmed"
+          },
+          {
+            "field": "entity_nit",
+            "label": "NIT de la entidad",
+            "claimed": "890984423",
+            "source": "890984423",
+            "status": "confirmed"
+          },
+          {
+            "field": "estimated_value",
+            "label": "Valor estimado",
+            "claimed": 380000000,
+            "source": 380000000,
+            "status": "confirmed"
+          },
+          {
+            "field": "closing_date",
+            "label": "Fecha de cierre",
+            "claimed": "2026-09-10",
+            "source": "2026-09-10",
+            "status": "confirmed"
+          },
+          {
+            "field": "publication_date",
+            "label": "Fecha de publicación",
+            "claimed": "2026-08-16",
+            "source": "2026-08-16",
+            "status": "confirmed"
+          }
+        ],
+        "source_ref": "CO1.NTC.DEMO004",
+        "source_url": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO004"
+      }
     }
   ]
 }

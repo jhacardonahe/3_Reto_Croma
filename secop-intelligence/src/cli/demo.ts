@@ -9,6 +9,7 @@ import { classifyFotonLine } from '../modules/classification.js';
 import { evaluateAlerts } from '../modules/alerting.js';
 import { calculateOpportunityScore } from '../utils/scoring.js';
 import { estimateUnits, extractSpecs } from '../utils/estimate.js';
+import { verifyOpportunity } from '../utils/verify.js';
 import { daysUntil } from '../utils/date.js';
 import type { OpportunityResult } from '../types.js';
 
@@ -88,6 +89,8 @@ for (const s of SAMPLES) {
   });
   if (scoring.total < MIN_SCORE) continue;
 
+  const publicationDate = new Date().toISOString().slice(0, 10);
+  const secopLink = `https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=${s.notice_uid}`;
   const opp: OpportunityResult = {
     notice_uid: s.notice_uid,
     entity_name: s.entity_name,
@@ -96,7 +99,7 @@ for (const s of SAMPLES) {
     city: null,
     object: s.object,
     estimated_value: s.base_price,
-    publication_date: new Date().toISOString().slice(0, 10),
+    publication_date: publicationDate,
     closing_date: s.bid_deadline,
     days_to_close: daysToClose,
     foton_line: classification.line,
@@ -105,7 +108,25 @@ for (const s of SAMPLES) {
     specs: extractSpecs(s.object),
     scoring,
     alerts: [],
-    secop_link: `https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=${s.notice_uid}`,
+    secop_link: secopLink,
+    verification: verifyOpportunity(
+      {
+        notice_uid: s.notice_uid,
+        entity_nit: s.entity_nit,
+        estimated_value: s.base_price,
+        closing_date: s.bid_deadline,
+        publication_date: publicationDate,
+        secop_link: secopLink,
+      },
+      {
+        notice_uid: s.notice_uid,
+        base_price: s.base_price,
+        entity_nit: s.entity_nit,
+        bid_deadline: s.bid_deadline,
+        published_date: publicationDate,
+        url: secopLink,
+      },
+    ),
   };
   opp.alerts = evaluateAlerts(opp);
   opportunities.push(opp);

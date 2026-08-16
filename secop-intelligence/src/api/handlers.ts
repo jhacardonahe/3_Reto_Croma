@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { runMonitoring } from '../modules/monitoring.js';
 import { analyzeCompetitor } from '../modules/competitive.js';
+import { analyzeMarket } from '../modules/market.js';
 import { trackContract, trackContractWithSanctions } from '../modules/tracking.js';
 import { opportunitiesToCsv } from '../utils/csv-export.js';
 import { croma } from '../croma/client.js';
@@ -56,6 +57,50 @@ export async function getOpportunities(req: Request, res: Response): Promise<voi
   }
 }
 
+/**
+ * Igual que getOpportunities, pero transmite la corrida en vivo por SSE:
+ * cada hito del pipeline (listar → pre-filtrar → detallar → clasificar → puntuar →
+ * verificar) se emite como evento para el panel de trazabilidad. El evento final
+ * `done` trae el payload completo con el que se pinta la tabla. Solo lectura.
+ */
+export async function streamOpportunities(req: Request, res: Response): Promise<void> {
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // nginx: no bufferizar el stream
+  (res as unknown as { flushHeaders?: () => void }).flushHeaders?.();
+
+  const send = (event: string, data: unknown): void => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const run = await runMonitoring({
+      entityNits: parseList(req.query.entity_nits),
+      fromDate: str(req.query.from_date),
+      limit: num(req.query.limit) ?? 20,
+      minScore: num(req.query.min_score),
+      segments: parseList(req.query.segment ?? req.query.segments),
+      department: str(req.query.department) || undefined,
+      keyword: str(req.query.keyword) || undefined,
+      onEvent: (ev) => send('event', ev),
+    });
+    send('done', {
+      timestamp: run.timestamp,
+      total_processed: run.total_processed,
+      total_filtered: run.total_prefiltered,
+      detail_lookups: run.detail_lookups,
+      failed_lookups: run.failed_lookups,
+      total_count: run.opportunities.length,
+      opportunities: run.opportunities,
+    });
+  } catch (err) {
+    send('failed', { error: err instanceof Error ? err.message : 'Error desconocido' });
+  } finally {
+    res.end();
+  }
+}
+
 export async function postCompetitorAnalysis(req: Request, res: Response): Promise<void> {
   try {
     const nit = String(req.body?.competitor_nit ?? '').trim();
@@ -73,6 +118,24 @@ export async function postCompetitorAnalysis(req: Request, res: Response): Promi
       entityNit: (b.entity_nit ?? b.filters?.entity_nit) || undefined,
       minValue: minValueRaw != null && minValueRaw !== '' ? Number(minValueRaw) : undefined,
       keyword: (b.keyword ?? b.filters?.keyword) || undefined,
+    });
+    res.json(analysis);
+  } catch (err) {
+    fail(res, err);
+  }
+}
+
+/** Inteligencia de mercado por sector: cómo compran las entidades (todos los proveedores). */
+export async function getMarket(req: Request, res: Response): Promise<void> {
+  try {
+    const analysis = await analyzeMarket({
+      entityNits: parseList(req.query.entity_nits),
+      fromDate: str(req.query.from_date) || undefined,
+      toDate: str(req.query.to_date) || undefined,
+      line: str(req.query.line ?? req.query.segment) || undefined,
+      department: str(req.query.department) || undefined,
+      keyword: str(req.query.keyword) || undefined,
+      maxDetailLookups: num(req.query.max_detail),
     });
     res.json(analysis);
   } catch (err) {

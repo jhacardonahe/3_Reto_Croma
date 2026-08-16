@@ -2,6 +2,7 @@ import { croma } from '../croma/client.js';
 import { competitors } from '../config.js';
 import { classifyFotonLine } from './classification.js';
 import { estimateUnits, extractSpecs } from '../utils/estimate.js';
+import { verifyCompetitor } from '../utils/verify.js';
 import type { CompetitorAnalysis, CompetitorContract, Contract } from '../types.js';
 
 export interface CompetitorOptions {
@@ -111,6 +112,14 @@ export async function analyzeCompetitor(nit: string, opts: CompetitorOptions = {
     contracts,
     sanctions_count: sanctions.count ?? 0,
     trend: inferTrend(all.map(({ c }) => c)),
+    // Guard de agregados: recompone la suma sobre el set CRUDO completo (`all`, no el
+    // top-50 recortado) y verifica que cada contrato traiga contract_id citable.
+    verification: verifyCompetitor({
+      total_value: totalValue,
+      total_contracts: totalContracts,
+      average_contract_value: totalContracts ? Math.round(totalValue / totalContracts) : 0,
+      contracts: all.map(({ c }) => ({ contract_id: c.contract_id ?? null, value: c.value ?? null })),
+    }),
   };
 }
 

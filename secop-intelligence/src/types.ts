@@ -2,6 +2,9 @@
 // Los shapes de Croma están modelados sobre la respuesta REAL de la API
 // (verificada en vivo el 2026-08-15) y la referencia oficial de SECOP - Croma API.
 
+import type { Verification, AggregateVerification } from './utils/verify.js';
+export type { Verification, VerifyCheck, CheckStatus, AggregateVerification } from './utils/verify.js';
+
 // ----------------------------------------------------------------------------
 // Líneas de producto Foton
 // ----------------------------------------------------------------------------
@@ -235,6 +238,7 @@ export interface OpportunityResult {
   scoring: ScoreBreakdown;
   alerts: string[];
   secop_link: string | null;
+  verification: Verification; // guard de citas: cada dato afirmado trazado a Croma
 }
 
 /** Contrato del competidor con cantidad/precio unitario ESTIMADOS del texto del objeto (aprox., no oficial). */
@@ -273,6 +277,53 @@ export interface CompetitorAnalysis {
   contracts: CompetitorContract[];
   sanctions_count: number;
   trend: 'increasing' | 'stable' | 'decreasing';
+  verification: AggregateVerification; // guard de agregados: la suma cuadra con contratos citables
+}
+
+// ----------------------------------------------------------------------------
+// Inteligencia de MERCADO por sector (cómo compran las entidades)
+// ----------------------------------------------------------------------------
+/** Un contrato de vehículo adjudicado, visto desde el mercado (entidad + proveedor). */
+export interface MarketContract {
+  contract_id: string | null;
+  notice_uid: string | null;
+  entity: string | null; // entidad compradora
+  entity_nit: string | null;
+  department: string | null;
+  city: string | null;
+  provider: string | null; // proveedor que ganó
+  provider_nit: string | null;
+  object: string | null;
+  value: number | null;
+  line: FotonLine; // sector = línea Foton
+  sign_date: string | null;
+  status: string | null;
+  estimated_quantity: number | null;
+  estimated_unit_price: number | null;
+  specs: string[];
+}
+
+export interface MarketAnalysis {
+  filters: {
+    line: string | null;
+    department: string | null;
+    keyword: string | null;
+    from_date: string | null;
+    to_date: string | null;
+  };
+  totals: {
+    entities_scanned: number;
+    processes_seen: number;
+    detail_lookups: number;
+    contracts: number;
+    total_value: number;
+    estimated_units: number;
+    providers: number;
+  };
+  by_category: Record<string, { contracts: number; total_value: number; estimated_units: number; average_unit_price: number | null }>;
+  by_entity: { entity: string | null; entity_nit: string | null; department: string | null; contracts: number; value: number; categories: FotonLine[] }[];
+  by_provider: { provider: string | null; provider_nit: string | null; contracts: number; value: number; categories: FotonLine[] }[];
+  contracts: MarketContract[];
 }
 
 export interface ContractTracking {

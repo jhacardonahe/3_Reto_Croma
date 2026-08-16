@@ -44,6 +44,9 @@
     .pill.hi { background:#3a1c22; color:var(--hi); }
     .spec { display:inline-block; padding:1px 6px; border-radius:6px; font-size:10px; background:#1c2745; color:#9fd0ff; margin:2px 3px 0 0; }
     .line { font-weight:600; color:var(--acc); }
+    .vchip { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; white-space:nowrap; cursor:help; }
+    .vchip.ok { background:#12352a; color:var(--ok); border:1px solid #1c5c46; }
+    .vchip.warn { background:#3a2c12; color:#e8c33e; border:1px solid #6b551c; }
     a { color:var(--acc); }
     .empty { color:var(--mut); padding:30px 0; }
     h2.sec { font-size:15px; margin:4px 0; }
@@ -54,6 +57,45 @@
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
     @media (max-width:820px){ .grid2 { grid-template-columns:1fr; } }
     .subh { color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin:6px 0; }
+
+    /* --- Panel lateral de trazabilidad en vivo --- */
+    #trace { position:fixed; top:0; right:0; width:340px; height:100vh; overflow-y:auto;
+             background:#0d1426; border-left:1px solid #23304f; padding:18px 16px 40px; z-index:5; }
+    body { padding-right:340px; }
+    @media (max-width:1100px){
+      body { padding-right:0; }
+      #trace { position:static; width:auto; height:auto; border-left:none; border-top:1px solid #23304f; }
+    }
+    #trace h2 { font-size:15px; margin:0 0 4px; }
+    .t-sub { color:var(--mut); font-size:12px; margin:0 0 12px; line-height:1.45; }
+    .t-stat { font-size:12px; color:var(--acc); background:#111a30; border:1px solid #23304f;
+              border-radius:8px; padding:8px 10px; margin-bottom:14px; }
+    .t-stages { list-style:none; margin:0 0 14px; padding:0; }
+    .t-stage { display:flex; gap:9px; padding:8px 0; border-bottom:1px solid #182241; }
+    .t-stage:last-child { border-bottom:none; }
+    .t-ic { flex:0 0 20px; width:20px; height:20px; border-radius:50%; text-align:center; line-height:20px;
+            font-size:12px; background:#1a2440; color:var(--mut); border:1px solid #2a3557; }
+    .t-stage.run .t-ic { background:#22304f; color:var(--acc); border-color:var(--acc); animation:spin 1s linear infinite; }
+    .t-stage.done .t-ic { background:#12352a; color:var(--ok); border-color:#1c5c46; animation:none; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .t-stage .tt { font-size:13px; font-weight:600; }
+    .t-stage.done .tt { color:var(--ink); }
+    .t-stage .td { font-size:11.5px; color:var(--mut); line-height:1.4; margin-top:2px; }
+    .t-note { color:var(--ok); font-size:11px; font-weight:600; }
+    .t-counts { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+    .t-cell { background:#111a30; border:1px solid #23304f; border-radius:8px; padding:8px 10px; }
+    .t-cell .k { color:var(--mut); font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; }
+    .t-cell .v { font-size:17px; font-weight:700; margin-top:2px; }
+    .t-feed { max-height:260px; overflow-y:auto; margin-bottom:14px; }
+    .t-item { display:flex; gap:8px; padding:7px 0; border-bottom:1px solid #182241; font-size:12px; }
+    .t-item .fi { flex:0 0 16px; }
+    .t-item.ok .fi { color:var(--ok); } .t-item.warn .fi { color:#e8c33e; } .t-item.info .fi { color:var(--acc); }
+    .t-item .fl { font-weight:600; }
+    .t-item .fe { color:var(--mut); font-size:11px; margin-top:1px; }
+    .t-item code { background:#0b1020; padding:1px 5px; border-radius:5px; color:#9fd0ff; font-size:10.5px; }
+    .t-empty { color:var(--mut); font-size:12px; padding:14px 0; }
+    .t-legend { font-size:11px; color:var(--mut); line-height:1.7; border-top:1px solid #23304f; padding-top:12px; }
+    .t-legend .vchip { font-size:10px; margin-right:2px; }
   </style>
 </head>
 <body>
@@ -105,7 +147,7 @@
     <div class="meta" id="meta">Configura filtros y pulsa <b>Buscar</b>. (Requiere CROMA_API_KEY en el servidor.)</div>
     <table>
       <thead>
-        <tr><th>Score</th><th>Línea</th><th>Entidad</th><th>Objeto</th><th>Valor est.</th><th>Cant./Unit. aprox.</th><th>Cierre</th><th>Alertas</th><th></th></tr>
+        <tr><th>Score</th><th>Línea</th><th>Entidad</th><th>Objeto</th><th>Valor est.</th><th>Cant./Unit. aprox.</th><th>Cierre</th><th>Alertas</th><th>Fuente</th></tr>
       </thead>
       <tbody id="rows"></tbody>
     </table>
@@ -113,15 +155,13 @@
   </main>
 
   <div class="bar" style="border-top:1px solid #23304f; margin-top:12px">
-    <div style="flex-basis:100%"><h2 class="sec">🏁 Inteligencia competitiva</h2></div>
-    <div>
-      <label>NIT del competidor</label>
-      <input id="cnit" size="14" value="860034604" placeholder="860034604" />
+    <div style="flex-basis:100%"><h2 class="sec">🏁 Inteligencia de mercado por sector</h2>
+      <div style="color:var(--mut);font-size:12px">Cómo compran las entidades públicas: todos los vehículos adjudicados y todos los proveedores (no un solo NIT).</div>
     </div>
     <div>
-      <label>Categoría</label>
-      <select id="cline">
-        <option value="">Todas</option>
+      <label>Sector (categoría)</label>
+      <select id="mline">
+        <option value="">Todos</option>
         <option>NEW_ENERGY_PICKUP</option>
         <option>PICKUP_MHEV</option>
         <option>PICKUP</option>
@@ -133,37 +173,64 @@
       </select>
     </div>
     <div>
+      <label>Departamento</label>
+      <input id="mdept" size="12" placeholder="Antioquia, Bogotá…" />
+    </div>
+    <div>
       <label>Desde</label>
-      <input id="cfrom" size="10" value="2024-01-01" placeholder="yyyy-mm-dd" />
+      <input id="mfrom" size="10" value="2025-01-01" placeholder="yyyy-mm-dd" />
     </div>
     <div>
       <label>Hasta</label>
-      <input id="cto" size="10" placeholder="yyyy-mm-dd" />
-    </div>
-    <div>
-      <label>Entidad (NIT)</label>
-      <input id="cent" size="11" placeholder="opcional" />
-    </div>
-    <div>
-      <label>Valor mín. (COP)</label>
-      <input id="cmin" size="11" placeholder="ej. 100000000" />
+      <input id="mto" size="10" placeholder="yyyy-mm-dd" />
     </div>
     <div>
       <label>Palabra clave</label>
-      <input id="ckw" size="12" placeholder="blindada, híbrida…" />
+      <input id="mkw" size="12" placeholder="blindada, híbrida…" />
     </div>
-    <button id="cgo">Analizar competidor</button>
+    <button id="mgo">Analizar mercado</button>
   </div>
 
   <main>
-    <div class="meta" id="cmeta">Ej.: <b>860034604</b> (AUTOMAYOR S.A.) · <b>830096621</b> (EPIA SAS). Pulsa <b>Analizar</b>.</div>
-    <div id="cout"></div>
+    <div class="meta" id="mmeta">Barre las entidades compradoras configuradas y agrega el mercado por sector. Pulsa <b>Analizar mercado</b> (la primera corrida puede tardar por el rate-limit de Croma).</div>
+    <div id="mout"></div>
   </main>
+
+  <aside id="trace">
+    <h2>🔎 Trazabilidad en vivo</h2>
+    <p class="t-sub">Cada dato del tablero se traza a su origen en Croma. Aquí ves, paso a paso, cómo se construye la evidencia y qué queda confirmado contra la fuente oficial.</p>
+    <div class="t-stat" id="tstat">Inactivo · pulsa <b>Buscar oportunidades</b> para ver la corrida en vivo.</div>
+    <ol class="t-stages" id="tstages"></ol>
+    <div class="subh">Métricas de la corrida</div>
+    <div class="t-counts" id="tcounts"></div>
+    <div class="subh">Evidencia por oportunidad</div>
+    <div class="t-feed" id="tfeed"><div class="t-empty">Aún sin corrida.</div></div>
+    <div class="t-legend">
+      <span class="vchip ok">✓ cita completa</span> cada dato coincide con el payload crudo de Croma.<br>
+      <span class="vchip warn">⚠ parcial</span> algún campo no tiene respaldo en la fuente.<br>
+      <b>Sin ancla → descartado:</b> si el <code>notice_uid</code> no cuadra, la oportunidad no se emite.
+    </div>
+  </aside>
 
   <script>
     const $ = (id) => document.getElementById(id);
     const cop = (n) => n == null ? '—' : new Intl.NumberFormat('es-CO', { style:'currency', currency:'COP', maximumFractionDigits:0 }).format(n);
     const scoreClass = (s) => s >= 70 ? 's-hi' : s >= 50 ? 's-md' : 's-lo';
+
+    // Chip del guard de citas: cada dato afirmado trazado al payload crudo de Croma.
+    function vchip(v) {
+      if (!v) return '';
+      const cls = v.ok ? 'ok' : 'warn';
+      const icon = v.ok ? '✓' : '⚠';
+      const label = v.ok ? `Verificado ${v.confirmed}/${v.checked}` : `Parcial ${v.confirmed}/${v.checked}`;
+      const lines = (v.checks || [])
+        .filter((c) => c.status !== 'unverifiable')
+        .map((c) => `${c.status === 'confirmed' ? '✓' : '✗'} ${c.label}: ${c.claimed}`);
+      const ref = v.source_ref ? [`Fuente Croma: ${v.source_ref}`]
+        : (v.source_refs && v.source_refs.length ? [`Fuente Croma: ${v.source_refs.join(', ')}${v.total > v.source_refs.length ? '…' : ''}`] : []);
+      const tip = [`${v.detail}`, ...ref, '', ...lines].join('\n');
+      return `<span class="vchip ${cls}" title="${(tip).replace(/"/g, '&quot;')}">${icon} ${label} · Croma</span>`;
+    }
 
     function qs() {
       const p = new URLSearchParams();
@@ -176,99 +243,166 @@
       return p.toString();
     }
 
-    async function load() {
-      $('go').disabled = true; $('meta').textContent = 'Consultando Croma…'; $('rows').innerHTML = '';
-      try {
-        const r = await fetch('/api/opportunities?' + qs());
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error || 'Error');
-        $('meta').innerHTML = `Procesados <b>${d.total_processed}</b> · pre-filtrados <b>${d.total_filtered}</b> · detalles <b>${d.detail_lookups}</b> · oportunidades <b>${d.total_count}</b> · ${new Date(d.timestamp).toLocaleString('es-CO')}`;
-        $('empty').style.display = d.opportunities.length ? 'none' : 'block';
-        $('rows').innerHTML = d.opportunities.map((o) => `
-          <tr>
-            <td class="score ${scoreClass(o.scoring.total)}">${o.scoring.total.toFixed(1)}</td>
-            <td class="line">${o.foton_line}<br><span style="color:var(--mut);font-size:11px">${Math.round(o.line_confidence*100)}%</span></td>
-            <td>${o.entity_name ?? '—'}<br><span style="color:var(--mut);font-size:11px">${o.entity_nit ?? ''}${o.department?` · ${o.department}`:''}</span></td>
-            <td>${(o.object || '').slice(0,120)}${(o.specs&&o.specs.length)?`<br>${o.specs.map(x=>`<span class="spec">${x}</span>`).join('')}`:''}</td>
-            <td>${cop(o.estimated_value)}</td>
-            <td>${o.estimated_quantity!=null?`${o.estimated_quantity} u · ${cop(o.estimated_unit_price)}`:'<span style="color:var(--mut)">—</span>'}</td>
-            <td>${o.closing_date ?? '—'}${o.days_to_close!=null?`<br><span style="color:var(--mut);font-size:11px">${o.days_to_close} d</span>`:''}</td>
-            <td>${o.alerts.map((a)=>`<span class="pill ${['high_value','urgent_close','new_energy_segment'].includes(a)?'hi':''}">${a}</span>`).join('')}</td>
-            <td>${o.secop_link?`<a href="${o.secop_link}" target="_blank">SECOP↗</a>`:''}</td>
-          </tr>`).join('');
-      } catch (e) {
-        $('meta').textContent = '⚠️ ' + e.message;
-      } finally {
-        $('go').disabled = false;
+    function renderRows(d) {
+      $('meta').innerHTML = `Procesados <b>${d.total_processed}</b> · pre-filtrados <b>${d.total_filtered}</b> · detalles <b>${d.detail_lookups}</b> · oportunidades <b>${d.total_count}</b> · ${new Date(d.timestamp).toLocaleString('es-CO')}`;
+      $('empty').style.display = d.opportunities.length ? 'none' : 'block';
+      $('rows').innerHTML = d.opportunities.map((o) => `
+        <tr>
+          <td class="score ${scoreClass(o.scoring.total)}">${o.scoring.total.toFixed(1)}</td>
+          <td class="line">${o.foton_line}<br><span style="color:var(--mut);font-size:11px">${Math.round(o.line_confidence*100)}%</span></td>
+          <td>${o.entity_name ?? '—'}<br><span style="color:var(--mut);font-size:11px">${o.entity_nit ?? ''}${o.department?` · ${o.department}`:''}</span></td>
+          <td>${(o.object || '').slice(0,120)}${(o.specs&&o.specs.length)?`<br>${o.specs.map(x=>`<span class="spec">${x}</span>`).join('')}`:''}</td>
+          <td>${cop(o.estimated_value)}</td>
+          <td>${o.estimated_quantity!=null?`${o.estimated_quantity} u · ${cop(o.estimated_unit_price)}`:'<span style="color:var(--mut)">—</span>'}</td>
+          <td>${o.closing_date ?? '—'}${o.days_to_close!=null?`<br><span style="color:var(--mut);font-size:11px">${o.days_to_close} d</span>`:''}</td>
+          <td>${o.alerts.map((a)=>`<span class="pill ${['high_value','urgent_close','new_energy_segment'].includes(a)?'hi':''}">${a}</span>`).join('')}</td>
+          <td>${vchip(o.verification)}${o.secop_link?`<br><a href="${o.secop_link}" target="_blank">SECOP↗</a>`:''}</td>
+        </tr>`).join('');
+    }
+
+    // --- Panel de trazabilidad en vivo -------------------------------------
+    // Cada etapa explica QUÉ hace el pipeline y CON QUÉ evidencia de Croma.
+    const STAGES = [
+      ['list',      '1 · Listar procesos',       'Croma <code>processes-by-entity</code>: los procesos de cada NIT en la ventana. Partimos del registro oficial, no de una lista propia.'],
+      ['prefilter', '2 · Pre-filtro barato',     'Descarta lo que no puede ser un vehículo (tipo de contrato = bien + precio mínimo) sin gastar una llamada de detalle.'],
+      ['detail',    '3 · Detalle del proceso',   'Croma <code>process</code>: descripción y fecha de cierre reales de cada candidato.'],
+      ['classify',  '4 · Clasificar línea Foton','Mapea el objeto a la línea (PICKUP_MHEV, NEW_ENERGY…). Si no encaja, se descarta.'],
+      ['score',     '5 · Puntuar y alertar',     'Score por valor, urgencia de cierre y recurrencia del comprador; levanta alertas.'],
+      ['verify',    '6 · Guard de citas',        'Compara cada dato afirmado (valor, NIT, fechas) contra el payload crudo de Croma. Sin ancla = fuera.'],
+    ];
+    function resetTrace() {
+      $('tstat').innerHTML = 'Consultando Croma…';
+      $('tstages').innerHTML = STAGES.map(([k, t, d]) =>
+        `<li class="t-stage" id="st-${k}"><span class="t-ic">○</span><div><div class="tt">${t} <span class="t-note" id="sn-${k}"></span></div><div class="td">${d}</div></div></li>`).join('');
+      $('tcounts').innerHTML = ['Procesados','Pre-filtrados','Detalles','Verificadas']
+        .map((k) => `<div class="t-cell"><div class="k">${k}</div><div class="v" id="c-${k}">—</div></div>`).join('');
+      $('tfeed').innerHTML = '';
+    }
+    function setStage(key, status, note) {
+      const el = $('st-' + key); if (!el) return;
+      el.className = 't-stage ' + (status === 'done' ? 'done' : 'run');
+      el.querySelector('.t-ic').textContent = status === 'done' ? '✓' : '⟳';
+      if (note) $('sn-' + key).textContent = note;
+    }
+    function feed(cls, icon, line, extra) {
+      const div = document.createElement('div');
+      div.className = 't-item ' + cls;
+      div.innerHTML = `<span class="fi">${icon}</span><div><div class="fl">${line}</div>${extra?`<div class="fe">${extra}</div>`:''}</div>`;
+      $('tfeed').appendChild(div);
+      $('tfeed').scrollTop = $('tfeed').scrollHeight;
+    }
+    function onTrace(ev) {
+      if (ev.type === 'stage') {
+        setStage(ev.key, ev.status, ev.note);
+        if (ev.status === 'running') $('tstat').innerHTML = STAGES.find(s => s[0] === ev.key)?.[1] ?? '…';
+      } else if (ev.type === 'entity') {
+        feed('info', '🏛', ev.name, `${ev.processes} procesos · ${ev.relevant} candidato(s) de vehículo`);
+      } else if (ev.type === 'counts') {
+        $('c-Procesados').textContent = ev.total_processed;
+        $('c-Pre-filtrados').textContent = ev.total_prefiltered;
+      } else if (ev.type === 'progress') {
+        $('tstat').innerHTML = `Detallando y clasificando… <b>${ev.done}/${ev.total}</b>`;
+      } else if (ev.type === 'opportunity') {
+        const v = ev.verification;
+        feed(v.ok ? 'ok' : 'warn', v.ok ? '✓' : '⚠',
+          `${ev.foton_line} · ${ev.score.toFixed(1)} · ${ev.entity_name ?? ''}`,
+          `${v.confirmed}/${v.checked} datos confirmados contra Croma · <code>${v.source_ref ?? '—'}</code>`);
+      } else if (ev.type === 'summary') {
+        $('c-Detalles').textContent = ev.detail_lookups;
+        $('c-Verificadas').innerHTML = `${ev.verified}${ev.partial?` <span style="color:#e8c33e;font-size:12px">+${ev.partial}⚠</span>`:''}`;
+        $('tstat').innerHTML = `✅ Corrida completa · <b>${ev.emitted}</b> oportunidad(es), <b>${ev.verified}</b> con cita completa contra Croma.`;
       }
+    }
+
+    let es = null;
+    function load() {
+      $('go').disabled = true; $('meta').textContent = 'Consultando Croma…'; $('rows').innerHTML = '';
+      resetTrace();
+      if (es) { try { es.close(); } catch (_) {} }
+      let finished = false;
+      es = new EventSource('/api/opportunities/stream?' + qs());
+      es.addEventListener('event', (e) => onTrace(JSON.parse(e.data)));
+      es.addEventListener('done', (e) => {
+        finished = true;
+        renderRows(JSON.parse(e.data));
+        $('go').disabled = false; es.close();
+      });
+      es.addEventListener('failed', (e) => {
+        finished = true;
+        const d = JSON.parse(e.data);
+        $('meta').textContent = '⚠️ ' + d.error;
+        $('tstat').innerHTML = '⚠️ ' + d.error;
+        $('go').disabled = false; es.close();
+      });
+      es.onerror = () => {
+        if (finished) return; // cierre normal tras 'done'
+        $('meta').textContent = '⚠️ Conexión interrumpida con el servidor.';
+        $('tstat').innerHTML = '⚠️ Conexión interrumpida.';
+        $('go').disabled = false; try { es.close(); } catch (_) {}
+      };
     }
 
     $('go').onclick = load;
     $('csv').onclick = () => window.open('/api/opportunities?format=csv&' + qs(), '_blank');
 
-    async function loadComp() {
-      const nit = $('cnit').value.trim();
-      if (!nit) { $('cmeta').textContent = 'Ingresa un NIT.'; return; }
-      $('cgo').disabled = true; $('cmeta').textContent = 'Consultando Croma…'; $('cout').innerHTML = '';
+    async function loadMarket() {
+      const p = new URLSearchParams();
+      if ($('mline').value) p.set('line', $('mline').value);
+      if ($('mdept').value.trim()) p.set('department', $('mdept').value.trim());
+      if ($('mfrom').value.trim()) p.set('from_date', $('mfrom').value.trim());
+      if ($('mto').value.trim()) p.set('to_date', $('mto').value.trim());
+      if ($('mkw').value.trim()) p.set('keyword', $('mkw').value.trim());
+      $('mgo').disabled = true; $('mmeta').textContent = 'Barriendo entidades compradoras en Croma… (la primera corrida puede tardar)'; $('mout').innerHTML = '';
       try {
-        const r = await fetch('/api/competitor-analysis', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            competitor_nit: nit,
-            period: { from_date: $('cfrom').value.trim() || undefined, to_date: $('cto').value.trim() || undefined },
-            line: $('cline').value || undefined,
-            entity_nit: $('cent').value.trim() || undefined,
-            min_value: $('cmin').value.trim() || undefined,
-            keyword: $('ckw').value.trim() || undefined,
-          }),
-        });
+        const r = await fetch('/api/market?' + p.toString());
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Error');
-        const s = d.statistics || {};
+        const t = d.totals || {};
         const cards = [
-          ['Contratos ganados', s.total_contracts ?? 0],
-          ['Valor total', cop(s.total_value)],
-          ['Ticket promedio', cop(s.average_contract_value)],
-          ['Sanciones', d.sanctions_count ?? 0],
+          ['Inversión total', cop(t.total_value)],
+          ['Contratos', t.contracts ?? 0],
+          ['Unidades estim.', t.estimated_units ?? 0],
+          ['Proveedores', t.providers ?? 0],
         ];
-        const byLine = Object.entries(d.by_line || {}).sort((a, b) => (b[1].total_value || 0) - (a[1].total_value || 0));
-        const lineRows = byLine.map(([k, v]) => `<tr><td class="line">${k}</td><td>${v.contracts_won}</td><td>${cop(v.total_value)}</td><td>${cop(v.average_price)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">—</td></tr>';
-        const ents = (d.top_entities || []).map((e) => `<tr><td>${e.entity ?? '—'}<br><span style="color:var(--mut);font-size:11px">${e.entity_nit ?? ''}</span></td><td>${e.contracts}</td><td>${cop(e.value)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">—</td></tr>';
+        const catRows = Object.entries(d.by_category || {}).sort((a, b) => (b[1].total_value || 0) - (a[1].total_value || 0))
+          .map(([k, v]) => `<tr><td class="line">${k}</td><td>${v.contracts}</td><td>${cop(v.total_value)}</td><td style="text-align:right">${v.estimated_units || '—'}</td><td>${v.average_unit_price != null ? cop(v.average_unit_price) : '—'}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">—</td></tr>';
+        const entRows = (d.by_entity || []).map((e) => `<tr><td>${e.entity ?? '—'}<br><span style="color:var(--mut);font-size:11px">${e.entity_nit ?? ''}${e.department ? ` · ${e.department}` : ''}</span></td><td>${e.contracts}</td><td>${cop(e.value)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">—</td></tr>';
+        const provRows = (d.by_provider || []).map((pv) => `<tr><td>${pv.provider ?? '—'}<br><span style="color:var(--mut);font-size:11px">${pv.provider_nit ?? ''}</span></td><td>${pv.contracts}</td><td>${cop(pv.value)}</td><td>${(pv.categories || []).map((x) => `<span class="spec">${x}</span>`).join('')}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">—</td></tr>';
         const cts = (d.contracts || []).map((c) => `
           <tr>
             <td class="line">${c.line}</td>
-            <td>${(c.object || '—').slice(0,90)}<br><span style="color:var(--mut);font-size:11px">${c.entity ?? ''}${c.sign_date?` · ${c.sign_date}`:''}</span>${(c.specs&&c.specs.length)?`<br>${c.specs.map(x=>`<span class="spec">${x}</span>`).join('')}`:''}</td>
+            <td>${(c.object || '—').slice(0,80)}<br><span style="color:var(--mut);font-size:11px">${c.entity ?? ''}${c.sign_date ? ` · ${c.sign_date}` : ''}</span>${(c.specs && c.specs.length) ? `<br>${c.specs.map((x) => `<span class="spec">${x}</span>`).join('')}` : ''}</td>
+            <td>${c.provider ?? '—'}<br><span style="color:var(--mut);font-size:11px">${c.provider_nit ?? ''}</span></td>
             <td>${cop(c.value)}</td>
             <td style="text-align:right">${c.estimated_quantity ?? '—'}</td>
-            <td style="text-align:right">${c.estimated_unit_price!=null?cop(c.estimated_unit_price):'—'}</td>
-          </tr>`).join('') || '<tr><td colspan="5" class="empty">Sin contratos para esos filtros.</td></tr>';
+            <td style="text-align:right">${c.estimated_unit_price != null ? cop(c.estimated_unit_price) : '—'}</td>
+          </tr>`).join('') || '<tr><td colspan="6" class="empty">Sin contratos para esos filtros.</td></tr>';
         const f = d.filters || {};
-        const chips = [f.line && `categoría: ${f.line}`, f.entity_nit && `entidad: ${f.entity_nit}`, f.min_value && `≥ ${cop(f.min_value)}`, f.keyword && `“${f.keyword}”`].filter(Boolean).join(' · ');
-        $('cmeta').innerHTML = `<b>${d.competitor_name || nit}</b> · NIT ${d.competitor_nit} · tendencia <b>${d.trend ?? '—'}</b>${chips?` · <span style="color:var(--acc)">${chips}</span>`:''}`;
-        $('cout').innerHTML = `
+        const chips = [f.line && `sector: ${f.line}`, f.department && `depto: ${f.department}`, f.keyword && `“${f.keyword}”`].filter(Boolean).join(' · ');
+        $('mmeta').innerHTML = `Entidades barridas <b>${t.entities_scanned}</b> · procesos <b>${t.processes_seen}</b> · detalles <b>${t.detail_lookups}</b> · contratos <b>${t.contracts}</b>${chips ? ` · <span style="color:var(--acc)">${chips}</span>` : ''}`;
+        $('mout').innerHTML = `
           <div class="cards">${cards.map(([k, v]) => `<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
           <div class="grid2">
             <div>
-              <div class="subh">Contratos por categoría (línea Foton)</div>
-              <table><thead><tr><th>Línea</th><th>#</th><th>Valor</th><th>Prom.</th></tr></thead><tbody>${lineRows}</tbody></table>
+              <div class="subh">Entidades compradoras top</div>
+              <table><thead><tr><th>Entidad</th><th>#</th><th>Valor</th></tr></thead><tbody>${entRows}</tbody></table>
             </div>
             <div>
-              <div class="subh">Entidades top</div>
-              <table><thead><tr><th>Entidad</th><th>#</th><th>Valor</th></tr></thead><tbody>${ents}</tbody></table>
+              <div class="subh">Proveedores top (todos los que ganaron)</div>
+              <table><thead><tr><th>Proveedor</th><th>#</th><th>Valor</th><th>Sectores</th></tr></thead><tbody>${provRows}</tbody></table>
             </div>
           </div>
-          <div class="subh" style="margin-top:18px">Contratos ganados · cantidad y precio unitario <span style="color:var(--mut);text-transform:none;letter-spacing:0">(estimados del texto del objeto — aprox., no oficial)</span></div>
-          <table>
-            <thead><tr><th>Línea</th><th>Objeto / entidad</th><th>Valor total</th><th style="text-align:right">Cant.</th><th style="text-align:right">Unit. aprox.</th></tr></thead>
-            <tbody>${cts}</tbody>
-          </table>`;
+          <div class="subh" style="margin-top:18px">Mercado por sector (línea Foton)</div>
+          <table><thead><tr><th>Sector</th><th>#</th><th>Valor total</th><th style="text-align:right">Unid. est.</th><th>Unit. aprox.</th></tr></thead><tbody>${catRows}</tbody></table>
+          <div class="subh" style="margin-top:18px">Contratos adjudicados <span style="color:var(--mut);text-transform:none;letter-spacing:0">(cantidad/unitario estimados del texto — aprox., no oficial)</span></div>
+          <table><thead><tr><th>Sector</th><th>Objeto / entidad</th><th>Proveedor</th><th>Valor</th><th style="text-align:right">Cant.</th><th style="text-align:right">Unit.</th></tr></thead><tbody>${cts}</tbody></table>`;
       } catch (e) {
-        $('cmeta').textContent = '⚠️ ' + e.message;
+        $('mmeta').textContent = '⚠️ ' + e.message;
       } finally {
-        $('cgo').disabled = false;
+        $('mgo').disabled = false;
       }
     }
-    $('cgo').onclick = loadComp;
+    $('mgo').onclick = loadMarket;
   </script>
 
   <!-- Asesor Comercial: chat conversacional (n8n Agent → API SECOP) -->
