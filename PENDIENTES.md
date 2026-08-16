@@ -42,6 +42,16 @@ Documento-norte del reto: `RETO.md`
 
 ---
 
+## 🤖 Asesor Comercial (agente n8n + widget) — EN PRODUCCIÓN (2026-08-15)
+- Workflow `n8n/asesor-comercial.workflow.json` importado y ACTIVO en el n8n del VPS
+  (`docker-caddy-n8n-1`, https://n8n.jyrmecatronica.com), id `secopAsesorFoton01`.
+- Chat Trigger (webhook `secop-asesor-foton`) → AI Agent (gpt-4.1-mini, cred "OpenAi account")
+  con 3 herramientas `httpRequestTool`+`$fromAI` que consumen la API SECOP:
+  **buscar_oportunidades** (segmento/departamento/palabra clave/NITs/fecha), **analizar_competidor**,
+  **seguimiento_contrato**. Verificado e2e por chat con datos reales.
+- Widget `@n8n/chat` (botón flotante) embebido en el dashboard; CORS habilitado para autodata.
+- Nota infra: el 2º stack n8n (`n8n-n8n-1`+postgres) está roto/crash-loop (no lo tocamos).
+
 ## 🔧 Pendientes técnicos (en orden de impacto)
 
 - [ ] **Conseguir 3–5 NITs de entidades que SÍ compran vehículos** y verificarlos con Croma
