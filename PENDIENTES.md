@@ -206,6 +206,21 @@ Documento-norte del reto: `RETO.md`
       subir el techo con espaciado; el **default de producción (maxDetail 60, ventana 7d)** es el sobre
       correcto y NO sufre esto (la corrida DILOF de 60 lookups dio 0 fallidos). NO regenerar `demo-run.json`
       desde esta corrida degradada — las 3 oportunidades son las mismas de la versión limpia.
+      ✅ **CAUSA RAÍZ CONFIRMADA + MITIGADA (2026-08-16):** el límite real de Croma es el **Default Bucket**
+      (docs.usecroma.com/rate-limits; header observado `X-RateLimit-Limit: 600`, reinicio diario 00:00 UTC),
+      compartido por TODA la organización — mis sweeps + verificaciones de NITs por MCP lo agotaron y por eso
+      `/api/market` y `/api/retrospective` daban 0 en producción. **Resuelto** (`fbbfebb`): (1) **key de
+      respaldo** `CROMA_API_KEY_BACKUP` con **failover pegajoso en 429**; (2) el cliente **lee los headers
+      `X-RateLimit-*`** y expone `/api/usage`; (3) **barra de cuota en la UI** (arriba) con restante/límite,
+      key activa y hora de reinicio. Verificado en prod: retrospectiva 17 cerradas $55.31B; usage 70/600.
+
+## ✅ Cuota Croma + failover (2026-08-16) — HECHO y DESPLEGADO
+- **Key de respaldo** (`CROMA_API_KEY_BACKUP` en `.env` local + `.env` remoto vía deploy; NUNCA al repo).
+  Failover automático y pegajoso cuando la primaria devuelve **429** (cuota agotada).
+- **Contador de rate-limit desde los headers** `X-RateLimit-Limit/Remaining/Reset` + `Retry-After`
+  (fails-open: sin headers no pisa lo conocido). Endpoint `GET /api/usage` y `health.usage`.
+- **Barra superior en el dashboard**: capacidad restante (verde/ámbar/rojo), key activa (primaria/backup)
+  y reinicio; refresca al cargar, cada 30s y tras cada consulta. Límite real = header (Default Bucket, 600 obs.).
 
 - [~] **Conseguir 3–5 NITs de entidades que SÍ compran vehículos** — 5 cargadas y verificadas
       (DILOF, Antioquia, INVÍAS, Distrito CT+i Medellín, Cundinamarca). Se puede seguir sumando
