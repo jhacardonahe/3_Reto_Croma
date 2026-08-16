@@ -220,6 +220,8 @@ export interface OpportunityResult {
   notice_uid: string;
   entity_name: string | null;
   entity_nit: string | null;
+  department: string | null; // departamento de la entidad (para filtro geográfico)
+  city: string | null;
   object: string; // descripción usada para clasificar
   estimated_value: number | null;
   publication_date: string | null;

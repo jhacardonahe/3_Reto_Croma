@@ -70,7 +70,15 @@ Documento-norte del reto: `RETO.md`
 
 ---
 
-## 🚀 Deploy en VPS → autodata.jyrmecatronica.com (LISTO PARA 1 COMANDO)
+## 🟢 Deploy en VPS → https://autodata.jyrmecatronica.com (EN PRODUCCIÓN)
+- **DESPLEGADO y verificado 2026-08-15**: systemd `secop-intelligence` (active+enabled), nginx + **HTTPS
+  (Let's Encrypt, expira 2026-11-14, auto-renovación)**, redirect http→https. E2E remoto OK:
+  `/` 200, `/api/health` ok, `POST /api/competitor-analysis` con datos reales (AUTOMAYOR $3.33B).
+- **Link para el formulario:** https://autodata.jyrmecatronica.com
+- Operación: `ssh root@46.225.123.7 'systemctl status secop-intelligence'` · logs `journalctl -u secop-intelligence -f`.
+- Re-deploy (tras cambios): cargar llave en el agente y `bash deploy/deploy-vps.sh` de nuevo (idempotente).
+
+## 🚀 Deploy en VPS — notas del script (referencia)
 - Destino: VPS Hetzner `root@46.225.123.7`, subdominio **autodata.jyrmecatronica.com**, puerto interno 8096.
 - **Diagnóstico llave:** la del VPS es `~/.ssh/hetzner_N8N_Letin_IA_key` (CIFRADA con passphrase);
   `id_ed25519` no está autorizada. Antes fallaba solo porque `BatchMode` no podía desbloquear la cifrada.

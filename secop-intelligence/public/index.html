@@ -13,7 +13,7 @@
     header .tag { color:var(--mut); font-size:13px; }
     .bar { padding:16px 28px; display:flex; gap:12px; flex-wrap:wrap; align-items:end; }
     label { display:block; font-size:12px; color:var(--mut); margin-bottom:4px; }
-    input, button { background:var(--card); border:1px solid #2a3557; color:var(--ink); border-radius:8px; padding:9px 12px; font-size:14px; }
+    input, select, button { background:var(--card); border:1px solid #2a3557; color:var(--ink); border-radius:8px; padding:9px 12px; font-size:14px; }
     button { cursor:pointer; background:var(--acc); border-color:var(--acc); color:#04121f; font-weight:600; }
     button:disabled { opacity:.5; cursor:wait; }
     main { padding:8px 28px 40px; }
@@ -52,6 +52,28 @@
     <div>
       <label>Desde (yyyy-mm-dd)</label>
       <input id="from" size="12" placeholder="hoy-7d" />
+    </div>
+    <div>
+      <label>Segmento</label>
+      <select id="segment">
+        <option value="">Todos</option>
+        <option>NEW_ENERGY_PICKUP</option>
+        <option>PICKUP_MHEV</option>
+        <option>PICKUP</option>
+        <option>NEW_ENERGY</option>
+        <option>AUV_VAN</option>
+        <option>LDT</option>
+        <option>HDT</option>
+        <option>SPECIAL</option>
+      </select>
+    </div>
+    <div>
+      <label>Departamento</label>
+      <input id="department" size="12" placeholder="Antioquia" />
+    </div>
+    <div>
+      <label>Palabra clave</label>
+      <input id="keyword" size="14" placeholder="híbrida, blindada…" />
     </div>
     <div>
       <label>Límite</label>
@@ -99,6 +121,9 @@
       const p = new URLSearchParams();
       if ($('nits').value.trim()) p.set('entity_nits', $('nits').value.trim());
       if ($('from').value.trim()) p.set('from_date', $('from').value.trim());
+      if ($('segment').value) p.set('segment', $('segment').value);
+      if ($('department').value.trim()) p.set('department', $('department').value.trim());
+      if ($('keyword').value.trim()) p.set('keyword', $('keyword').value.trim());
       if ($('limit').value.trim()) p.set('limit', $('limit').value.trim());
       return p.toString();
     }
@@ -115,7 +140,7 @@
           <tr>
             <td class="score ${scoreClass(o.scoring.total)}">${o.scoring.total.toFixed(1)}</td>
             <td class="line">${o.foton_line}<br><span style="color:var(--mut);font-size:11px">${Math.round(o.line_confidence*100)}%</span></td>
-            <td>${o.entity_name ?? '—'}<br><span style="color:var(--mut);font-size:11px">${o.entity_nit ?? ''}</span></td>
+            <td>${o.entity_name ?? '—'}<br><span style="color:var(--mut);font-size:11px">${o.entity_nit ?? ''}${o.department?` · ${o.department}`:''}</span></td>
             <td>${(o.object || '').slice(0,120)}</td>
             <td>${cop(o.estimated_value)}</td>
             <td>${o.closing_date ?? '—'}${o.days_to_close!=null?`<br><span style="color:var(--mut);font-size:11px">${o.days_to_close} d</span>`:''}</td>

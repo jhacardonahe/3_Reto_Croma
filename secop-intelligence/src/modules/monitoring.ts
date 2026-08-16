@@ -13,6 +13,15 @@ export interface MonitorOptions {
   limit?: number; // top N a devolver (default 50)
   minScore?: number; // umbral (default 40)
   maxDetailLookups?: number; // tope de llamadas de detalle por corrida (control de costo)
+  // --- filtros de búsqueda (opcionales) ---
+  segments?: string[]; // filtrar por línea Foton (p.ej. ['PICKUP_MHEV','NEW_ENERGY'])
+  department?: string; // filtrar por departamento de la entidad (acento-insensible, substring)
+  keyword?: string; // filtrar por palabra clave en objeto/entidad (acento-insensible)
+}
+
+/** Normaliza para comparar: minúsculas + sin tildes. */
+function fold(s: string | null | undefined): string {
+  return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
 export interface MonitorRun {
@@ -81,6 +90,16 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
     const classification = classifyFotonLine(`${object} ${cand.summary.contract_type ?? ''}`);
     if (classification.line === 'UNKNOWN') continue;
 
+    // --- filtros de búsqueda (post-detalle, sobre datos ya resueltos) ---
+    if (opts.segments?.length && !opts.segments.includes(classification.line)) continue;
+    const department = header?.entity_department ?? null;
+    const city = header?.entity_city ?? null;
+    if (opts.department && !fold(department).includes(fold(opts.department))) continue;
+    if (opts.keyword) {
+      const hay = fold(`${object} ${cand.summary.entity ?? ''} ${department ?? ''} ${city ?? ''}`);
+      if (!hay.includes(fold(opts.keyword))) continue;
+    }
+
     const estimatedValue = header?.base_price ?? cand.summary.base_price ?? null;
     const closingDate = header?.bid_deadline ?? null;
     const daysToClose = daysUntil(closingDate);
@@ -97,6 +116,8 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
       notice_uid: cand.summary.notice_uid,
       entity_name: cand.summary.entity ?? cand.entity.name,
       entity_nit: cand.summary.entity_nit ?? cand.entity.nit,
+      department,
+      city,
       object,
       estimated_value: estimatedValue,
       publication_date: cand.summary.published_date ?? header?.published_date ?? null,

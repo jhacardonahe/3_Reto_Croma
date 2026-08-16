@@ -31,6 +31,9 @@ export async function getOpportunities(req: Request, res: Response): Promise<voi
       fromDate: str(req.query.from_date),
       limit: num(req.query.limit) ?? 20,
       minScore: num(req.query.min_score),
+      segments: parseList(req.query.segment ?? req.query.segments),
+      department: str(req.query.department) || undefined,
+      keyword: str(req.query.keyword) || undefined,
     });
 
     if (str(req.query.format) === 'csv') {
