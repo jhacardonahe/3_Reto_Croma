@@ -28,6 +28,14 @@
     header { padding:20px 28px; border-bottom:1px solid #23304f; display:flex; align-items:center; gap:14px; }
     header h1 { font-size:19px; margin:0; }
     header .tag { color:var(--mut); font-size:13px; }
+    /* Barra de cuota de la API de Croma (Default Bucket 100/día) */
+    .usage { margin-left:auto; display:flex; align-items:center; gap:9px; font-size:12px; color:var(--mut); cursor:help; }
+    .usage .u-bar { width:120px; height:9px; border-radius:999px; background:#22304f; overflow:hidden; }
+    .usage .u-fill { height:100%; width:100%; background:var(--ok); transition:width .4s, background .4s; }
+    .usage .u-num { font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums; }
+    .usage .u-key { padding:2px 8px; border-radius:999px; background:#22304f; color:var(--acc); font-weight:600; font-size:11px; }
+    .usage .u-key.backup { background:#3a2c12; color:#e8c33e; }
+    @media (max-width:820px){ .usage .u-bar { display:none; } }
     .bar { padding:16px 28px; display:flex; gap:12px; flex-wrap:wrap; align-items:end; }
     label { display:block; font-size:12px; color:var(--mut); margin-bottom:4px; }
     input, select, button { background:var(--card); border:1px solid #2a3557; color:var(--ink); border-radius:8px; padding:9px 12px; font-size:14px; }
@@ -102,6 +110,12 @@
   <header>
     <h1>🚗 SECOP Intelligence</h1>
     <span class="tag">Oportunidades de compra pública · Foton Colombia × Croma</span>
+    <div class="usage" id="usage" title="Cuota de la API de Croma (según los headers X-RateLimit de cada respuesta). Al agotarse la primaria (429) hace failover automático a la key de respaldo.">
+      <span>Croma</span>
+      <div class="u-bar"><div class="u-fill" id="ufill"></div></div>
+      <span class="u-num" id="unum">—</span>
+      <span class="u-key" id="ukey">—</span>
+    </div>
   </header>
 
   <div class="bar">
@@ -253,6 +267,29 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const cop = (n) => n == null ? '—' : new Intl.NumberFormat('es-CO', { style:'currency', currency:'COP', maximumFractionDigits:0 }).format(n);
+
+    // --- Barra de cuota de la API de Croma (Default Bucket 100/día) ---------
+    async function refreshUsage() {
+      try {
+        const d = await (await fetch('/api/usage')).json();
+        const a = d[d.active] || {};
+        const limit = a.limit ?? 600; // se sobrescribe con el X-RateLimit-Limit real
+        const rem = a.remaining;
+        const pct = rem != null ? Math.max(0, Math.min(1, rem / limit)) : null;
+        $('unum').textContent = rem != null ? `${rem}/${limit}` : `?/${limit}`;
+        const fill = $('ufill');
+        fill.style.width = pct != null ? `${pct * 100}%` : '100%';
+        fill.style.background = pct == null ? '#2a3557' : pct > 0.3 ? 'var(--ok)' : pct > 0.1 ? '#e8c33e' : 'var(--hi)';
+        const key = $('ukey');
+        key.textContent = d.active === 'backup' ? 'backup' : 'primaria';
+        key.className = 'u-key' + (d.active === 'backup' ? ' backup' : '');
+        const reset = a.reset ? ` · reinicia ${new Date(a.reset).toLocaleString('es-CO')}` : '';
+        $('usage').title = `Cuota diaria de Croma (Default Bucket: ${limit}/día). Key activa: ${d.active}${rem != null ? ` · ${rem} restantes` : ' · aún sin medir (haz una consulta)'}${reset}.`
+          + (d.backup && d.backup.configured ? ' Backup configurada: failover automático en 429.' : ' Sin backup configurada.');
+      } catch (_) { /* silencioso */ }
+    }
+    refreshUsage();
+    setInterval(refreshUsage, 30000);
     const scoreClass = (s) => s >= 70 ? 's-hi' : s >= 50 ? 's-md' : 's-lo';
 
     // Chip del guard de citas: cada dato afirmado trazado al payload crudo de Croma.
@@ -363,14 +400,14 @@
       es.addEventListener('done', (e) => {
         finished = true;
         renderRows(JSON.parse(e.data));
-        $('go').disabled = false; es.close();
+        $('go').disabled = false; es.close(); refreshUsage();
       });
       es.addEventListener('failed', (e) => {
         finished = true;
         const d = JSON.parse(e.data);
         $('meta').textContent = '⚠️ ' + d.error;
         $('tstat').innerHTML = '⚠️ ' + d.error;
-        $('go').disabled = false; es.close();
+        $('go').disabled = false; es.close(); refreshUsage();
       });
       es.onerror = () => {
         if (finished) return; // cierre normal tras 'done'
@@ -437,7 +474,7 @@
       } catch (e) {
         $('mmeta').textContent = '⚠️ ' + e.message;
       } finally {
-        $('mgo').disabled = false;
+        $('mgo').disabled = false; refreshUsage();
       }
     }
     $('mgo').onclick = loadMarket;
@@ -493,7 +530,7 @@
       } catch (e) {
         $('hmeta').textContent = '⚠️ ' + e.message;
       } finally {
-        $('hgo').disabled = false;
+        $('hgo').disabled = false; refreshUsage();
       }
     }
     $('hgo').onclick = loadRetro;

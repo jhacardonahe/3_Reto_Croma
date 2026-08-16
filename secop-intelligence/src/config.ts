@@ -26,6 +26,9 @@ function loadJson<T>(file: string): T {
 
 export const config = {
   cromaApiKey: process.env.CROMA_API_KEY ?? '',
+  // Key de respaldo: se usa como failover cuando la primaria devuelve 429 (cuota agotada).
+  // El Default Bucket de Croma es 100 requests/día por organización (docs.usecroma.com/rate-limits).
+  cromaApiKeyBackup: process.env.CROMA_API_KEY_BACKUP ?? '',
   cromaBaseUrl: process.env.CROMA_BASE_URL ?? 'https://api.croma.run',
   port: Number(process.env.PORT ?? 8096),
   maxCallsPerMin: Number(process.env.CROMA_MAX_CALLS_PER_MIN ?? 10),

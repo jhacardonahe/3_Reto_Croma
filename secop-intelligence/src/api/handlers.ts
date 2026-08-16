@@ -22,7 +22,17 @@ export async function getHealth(_req: Request, res: Response): Promise<void> {
     base_url: config.cromaBaseUrl,
     entities: entities.length,
     competitors: competitors.length,
+    usage: croma.getUsage(),
   });
+}
+
+/**
+ * Cuota de la API de Croma: remaining/limit/reset por key (primaria y backup), tomado de
+ * los headers X-RateLimit-* de la última respuesta. Alimenta la barra de capacidad de la UI.
+ * Default Bucket = 100 requests/día por organización (docs.usecroma.com/rate-limits).
+ */
+export async function getUsage(_req: Request, res: Response): Promise<void> {
+  res.json(croma.getUsage());
 }
 
 export async function getOpportunities(req: Request, res: Response): Promise<void> {

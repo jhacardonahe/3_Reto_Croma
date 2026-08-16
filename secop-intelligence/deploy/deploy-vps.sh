@@ -33,6 +33,8 @@ echo "==> [2/7] Leyendo CROMA_API_KEY del .env local ..."
 if [[ ! -f "$APP_SRC/.env" ]]; then echo "ERROR: falta $APP_SRC/.env" >&2; exit 1; fi
 CROMA_API_KEY="$(grep -E '^CROMA_API_KEY=' "$APP_SRC/.env" | head -1 | cut -d= -f2-)"
 if [[ -z "${CROMA_API_KEY:-}" ]]; then echo "ERROR: CROMA_API_KEY vacía en .env" >&2; exit 1; fi
+# Key de respaldo (opcional): failover automático en 429. Se propaga al .env remoto si existe.
+CROMA_API_KEY_BACKUP="$(grep -E '^CROMA_API_KEY_BACKUP=' "$APP_SRC/.env" | head -1 | cut -d= -f2-)"
 
 echo "==> [3/7] Asegurando Node 18+ en el VPS ..."
 $SSH "$REMOTE" 'bash -s' <<'REMOTE_SETUP'
@@ -55,6 +57,7 @@ echo "==> [5/7] Escribiendo .env remoto (600) e instalando dependencias + build 
 # El .env se genera por stdin para no exponer la key en la línea de comandos.
 $SSH "$REMOTE" "umask 077 && cat > $APPDIR/.env" <<ENVEOF
 CROMA_API_KEY=$CROMA_API_KEY
+CROMA_API_KEY_BACKUP=$CROMA_API_KEY_BACKUP
 CROMA_BASE_URL=https://api.croma.run
 PORT=$PORT
 CROMA_MAX_CALLS_PER_MIN=10

@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { getHealth, getOpportunities, streamOpportunities, postCompetitorAnalysis, getMarket, getRetrospective, getContractTracking } from './handlers.js';
+import { getHealth, getUsage, getOpportunities, streamOpportunities, postCompetitorAnalysis, getMarket, getRetrospective, getContractTracking } from './handlers.js';
 
 export const api = Router();
 
 api.get('/health', getHealth);
+api.get('/usage', getUsage);
 api.get('/opportunities', getOpportunities);
 api.get('/opportunities/stream', streamOpportunities);
 api.post('/competitor-analysis', postCompetitorAnalysis);

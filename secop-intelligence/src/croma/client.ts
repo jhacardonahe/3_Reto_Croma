@@ -39,19 +39,78 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/** Snapshot de cuota de una key, tomado de los headers X-RateLimit-* de Croma. */
+export interface KeyUsage {
+  configured: boolean;
+  limit: number | null; // X-RateLimit-Limit (Default Bucket = 100/día)
+  remaining: number | null; // X-RateLimit-Remaining (lo que queda)
+  reset: string | null; // X-RateLimit-Reset (ISO en que se reinicia la ventana)
+  retry_after: number | null; // Retry-After en segundos (solo en 429)
+  updated_at: string | null;
+}
+export interface UsageSnapshot {
+  active: 'primary' | 'backup';
+  primary: KeyUsage;
+  backup: KeyUsage;
+}
+
 export class CromaClient {
   private limiter = new RateLimiter(config.maxCallsPerMin);
   private readonly ttlMs = config.cacheTtlHours * 3_600_000;
 
+  // Failover: se arranca en la primaria y se salta a la backup cuando Croma responde 429
+  // (cuota diaria agotada). El salto es "pegajoso" — una vez en backup, se queda ahí.
+  private active: 'primary' | 'backup' = 'primary';
+  private usage: { primary: KeyUsage; backup: KeyUsage } = {
+    primary: { configured: false, limit: null, remaining: null, reset: null, retry_after: null, updated_at: null },
+    backup: { configured: false, limit: null, remaining: null, reset: null, retry_after: null, updated_at: null },
+  };
+
   constructor(
     private apiKey = config.cromaApiKey,
     private baseUrl = config.cromaBaseUrl,
+    private backupKey = config.cromaApiKeyBackup,
   ) {
     if (!existsSync(config.cacheDir)) mkdirSync(config.cacheDir, { recursive: true });
+    this.usage.primary.configured = this.apiKey.trim().length > 0;
+    this.usage.backup.configured = this.backupKey.trim().length > 0;
+    // si no hay primaria pero sí backup, arranca en backup
+    if (!this.usage.primary.configured && this.usage.backup.configured) this.active = 'backup';
   }
 
   get hasKey(): boolean {
-    return this.apiKey.trim().length > 0;
+    return this.apiKey.trim().length > 0 || this.backupKey.trim().length > 0;
+  }
+
+  /** Key en uso ahora mismo. */
+  private get activeKey(): string {
+    return this.active === 'backup' ? this.backupKey : this.apiKey;
+  }
+
+  /** Estado de cuota de ambas keys (para /api/usage y la barra de la UI). */
+  getUsage(): UsageSnapshot {
+    return { active: this.active, primary: { ...this.usage.primary }, backup: { ...this.usage.backup } };
+  }
+
+  /** Registra la cuota reportada por los headers X-RateLimit-* de una respuesta. */
+  private recordUsage(which: 'primary' | 'backup', res: Response): void {
+    const num = (h: string): number | null => {
+      const v = res.headers.get(h);
+      if (v == null || v === '') return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    };
+    const u = this.usage[which];
+    const limit = num('x-ratelimit-limit');
+    const remaining = num('x-ratelimit-remaining');
+    const reset = res.headers.get('x-ratelimit-reset');
+    const retry = num('retry-after');
+    // "fails open": si el backend de rate-limit no responde, no vienen headers → no pisar lo conocido
+    if (limit != null) u.limit = limit;
+    if (remaining != null) u.remaining = remaining;
+    if (reset) u.reset = reset;
+    if (retry != null) u.retry_after = retry;
+    if (limit != null || remaining != null || reset || retry != null) u.updated_at = new Date().toISOString();
   }
 
   // --- Endpoints SECOP ------------------------------------------------------
@@ -107,16 +166,28 @@ export class CromaClient {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       await this.limiter.acquire();
       try {
+        const which = this.active;
         const res = await fetchWithTimeout(url, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${this.apiKey}`,
+            Authorization: `Bearer ${this.activeKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(body),
         }, 30_000);
 
-        if (res.status === 429 || res.status >= 500) {
+        this.recordUsage(which, res); // captura X-RateLimit-* de cada respuesta
+
+        if (res.status === 429) {
+          // Cuota diaria agotada en la key activa. Si estamos en la primaria y hay backup,
+          // failover PEGAJOSO: nos pasamos a la backup y reintentamos de inmediato.
+          if (which === 'primary' && this.usage.backup.configured) {
+            this.active = 'backup';
+            continue;
+          }
+          throw new CromaError('Croma respondió 429 (cuota de la API agotada)', 429);
+        }
+        if (res.status >= 500) {
           throw new CromaError(`Croma respondió ${res.status}`, res.status);
         }
         if (!res.ok) {
