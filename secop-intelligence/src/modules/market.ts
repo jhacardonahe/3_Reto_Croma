@@ -36,11 +36,16 @@ function isVehicleGoods(p: ProcessSummary): boolean {
   return isGoods && (p.base_price ?? 0) >= MIN_VEHICLE_PRICE;
 }
 
-/** Además de ser vehículo, el proceso debe estar adjudicado para traer contratos con proveedor. */
+/**
+ * Candidato de mercado: vehículo (bienes+precio) + ADJUDICADO (para traer contratos)
+ * + cuyo NOMBRE ya clasifica a una línea Foton real. Este último filtro (barato, sin
+ * gastar Croma) descarta motos/embarcaciones antes de gastar una llamada de detalle.
+ */
 function isAwardedVehicle(p: ProcessSummary): boolean {
   if (!isVehicleGoods(p)) return false;
   const st = fold(`${p.procedure_status ?? ''} ${p.phase ?? ''}`);
-  return AWARDED_STATUS.some((s) => st.includes(s));
+  if (!AWARDED_STATUS.some((s) => st.includes(s))) return false;
+  return classifyFotonLine(p.name ?? '').line !== 'UNKNOWN';
 }
 
 /**

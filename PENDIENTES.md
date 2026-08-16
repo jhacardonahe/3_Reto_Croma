@@ -87,6 +87,27 @@ Documento-norte del reto: `RETO.md`
 
 ## 🔧 Pendientes técnicos (en orden de impacto)
 
+- [ ] **🐞 `/api/market` devuelve TODO EN CERO en producción** (verificado e2e 2026-08-16, 02:05).
+      Corrida real contra el VPS: `http=200`, `t=208s`, **detail_lookups=40 pero contracts=0**,
+      total_value $0, providers 0, sectores/proveedores/entidades vacíos.
+      - **Dónde:** `src/modules/market.ts` → `analyzeMarket`. Flujo: por cada NIT `processesByEntity`
+        → filtra `isAwardedVehicle` (bien + precio ≥30M + estado en `AWARDED_STATUS`
+        seleccion/adjudic/celebr/ejecu/termin/liquid) → por candidato `croma.process(notice_uid)`
+        → **lee `detail.contracts[]`** → clasifica → agrega. Gasta 40 detalles ⇒ el filtro SÍ
+        encuentra candidatos, pero **`detail.contracts` sale vacío (o todo clasifica UNKNOWN)**.
+      - **Hipótesis de causa raíz:** el endpoint `co/secop/process` (detalle) NO trae el array de
+        contratos adjudicados para estos procesos; la vía que SÍ devuelve contratos con proveedor es
+        `co/secop/contracts-by-provider` (la que usa el guard de competidor, probado: AUTOMAYOR 6/6).
+        Es decir: `market.ts` está leyendo contratos de la fuente equivocada.
+      - **Fix sugerido:** o (a) tomar `provider_nit` de `detail.awards[]` y luego `contractsByProvider`,
+        o (b) reconstruir el mercado agregando `contractsByProvider` sobre los proveedores conocidos,
+        o (c) confirmar con `croma.process` de UN notice adjudicado si `contracts`/`awards` vienen
+        poblados antes de barrer.
+      - **⚠️ Ojo:** `market.ts` es **WIP de la sesión Claude paralela `f3d5`** (últimos commits
+        01:47–01:53 "feat/fix(mercado)"). NO tocar sin coordinar para no pisarnos. El deploy del
+        2026-08-16 subió su última versión commiteada (01:53), que es la que responde en cero.
+        El resto del sistema (oportunidades + guard + competidor) NO se ve afectado.
+
 - [ ] **Conseguir 3–5 NITs de entidades que SÍ compran vehículos** y verificarlos con Croma
       (`secop_processes_by_entity`). Candidatos: gobernaciones, alcaldías grandes, Policía Nacional,
       Ejército, INVÍAS, empresas de servicios públicos. *La UdeA no compra camionetas → 0 matches.*
