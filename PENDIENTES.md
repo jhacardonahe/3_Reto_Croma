@@ -52,6 +52,16 @@ Documento-norte del reto: `RETO.md`
 - Widget `@n8n/chat` (botón flotante) embebido en el dashboard; CORS habilitado para autodata.
 - Nota infra: el 2º stack n8n (`n8n-n8n-1`+postgres) está roto/crash-loop (no lo tocamos).
 
+## ✅ Opcionales técnicos — HECHOS (2026-08-16)
+- **Widget autoalojado**: `@n8n/chat` servido desde `/vendor/*` (sin CDN jsdelivr).
+- **price_gap** en seguimiento de contrato: `(valor adjudicado − estimado del proceso)/estimado`,
+  tomando el noticeUID de la URL del contrato. Guard: solo compara si el contrato cubre ≥40% del
+  estimado (evita ruido multi-lote). Verificado: CO1.PCCNTR.7874619 → −9.6% (bajo el estimado).
+- **Especificaciones generales** del texto del objeto (`extractSpecs`): tracción, combustible,
+  carrocería, blindaje con nivel, cilindraje. En oportunidades y contratos de competidor (pills + CSV).
+  Nota: la vía de **pliegos PDF NO fue viable** (extract_markdown de Croma falla en SECOP II y los
+  anexos no son accesibles) → se entregó la versión factible desde el texto.
+
 ## 🔧 Pendientes técnicos (en orden de impacto)
 
 - [ ] **Conseguir 3–5 NITs de entidades que SÍ compran vehículos** y verificarlos con Croma
