@@ -18,12 +18,23 @@ function fold(s: string | null | undefined): string {
   return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
+// Estados que indican que el proceso YA fue adjudicado → su detalle trae contratos
+// (proveedor + valor). Los procesos "en evaluación/publicado" aún no tienen contratos.
+const AWARDED_STATUS = ['seleccion', 'adjudic', 'celebr', 'ejecu', 'termin', 'liquid'];
+
 /** ¿este resumen de proceso PODRÍA ser una compra de vehículo? (barato, sin gastar detalle). */
 function isVehicleGoods(p: ProcessSummary): boolean {
   if (!p.notice_uid) return false;
   const type = (p.contract_type ?? '').toLowerCase();
   const isGoods = GOODS_CONTRACT_TYPES.some((t) => type.includes(t));
   return isGoods && (p.base_price ?? 0) >= MIN_VEHICLE_PRICE;
+}
+
+/** Además de ser vehículo, el proceso debe estar adjudicado para traer contratos con proveedor. */
+function isAwardedVehicle(p: ProcessSummary): boolean {
+  if (!isVehicleGoods(p)) return false;
+  const st = fold(`${p.procedure_status ?? ''} ${p.phase ?? ''}`);
+  return AWARDED_STATUS.some((s) => st.includes(s));
 }
 
 /**
@@ -47,7 +58,7 @@ export async function analyzeMarket(opts: MarketOptions = {}): Promise<MarketAna
   outer: for (const nit of targetNits) {
     const res = await croma.processesByEntity(nit, fromDate, toDate).catch(() => null);
     if (!res) continue;
-    const candidates = res.processes.filter(isVehicleGoods);
+    const candidates = res.processes.filter(isAwardedVehicle);
     processesSeen += res.processes.length;
 
     for (const cand of candidates) {
