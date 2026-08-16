@@ -75,10 +75,18 @@ $SSH "$REMOTE" "install -m 644 $APPDIR/deploy/secop-intelligence.service /etc/sy
 $SSH "$REMOTE" "bash -s" <<REMOTE_NGINX
 set -e
 if command -v nginx >/dev/null 2>&1; then
-  install -m 644 $APPDIR/deploy/nginx-autodata.conf /etc/nginx/sites-available/$DOMAIN
-  ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/$DOMAIN
+  # Solo (re)instalar el vhost base si aún NO tiene SSL, para no pisar la config de certbot.
+  if ! grep -qE "listen 443|ssl_certificate" /etc/nginx/sites-available/$DOMAIN 2>/dev/null; then
+    install -m 644 $APPDIR/deploy/nginx-autodata.conf /etc/nginx/sites-available/$DOMAIN
+    ln -sf /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/$DOMAIN
+  fi
   nginx -t && systemctl reload nginx
-  echo "nginx: sitio $DOMAIN habilitado (falta DNS A -> IP y luego: certbot --nginx -d $DOMAIN)"
+  # Si ya existe certificado para el dominio, reinstalar el bloque SSL (idempotente).
+  if [ -d /etc/letsencrypt/live/$DOMAIN ] && command -v certbot >/dev/null 2>&1; then
+    certbot --nginx -d $DOMAIN --non-interactive --agree-tos -m jhacardonahe@gmail.com --redirect >/dev/null 2>&1 && echo "nginx: SSL reinstalado por certbot"
+  else
+    echo "nginx: sitio $DOMAIN habilitado (falta DNS A -> IP y luego: certbot --nginx -d $DOMAIN)"
+  fi
 else
   echo "AVISO: nginx no está instalado; el servicio escucha en 127.0.0.1:$PORT"
 fi
