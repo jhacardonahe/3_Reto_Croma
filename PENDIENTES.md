@@ -186,6 +186,26 @@ Documento-norte del reto: `RETO.md`
       en proporción al nº de entidades, o el barrido de mercado se reparte muy fino.
       ✅ **DESPLEGADO 2026-08-16**: `deploy-vps.sh` corrido; health remoto reporta `entities:5`, servicio
       `active`+`enabled`, HTTPS OK. Cundinamarca + la paralelización YA están en producción.
+      **Fase 1 ampliada (`6231ac0`, 2026-08-16):** +6ª entidad **Dirección de Tránsito y Transporte Policía
+      `830090486`** (cosechada de `contracts_by_provider(EPIA)` → compradores reales; necromóvil $2.12B).
+      Método ganador: cosechar compradores de los contratos de los vendedores conocidos (AUTOMAYOR/EPIA),
+      NO adivinar NITs. **Descartadas** por 0 aciertos Foton-relevantes en ventana reciente: Santa Marta
+      891780009, DIJIN 800141338 (solo motos), Envigado, Barranquilla 890102018, Cali 890399011,
+      Bogotá-Seguridad 899999061, Pasto 891280000, Nariño 800103923, Boyacá 891800498, ICBF 899999239,
+      Meta 892000148, UNP 900576918. **HALLAZGO:** el mercado Foton se concentra en compradores de
+      **camionetas tipo DILOF/Policía**; motos/necromóviles-genéricos/parque-automotor sin carrocería
+      → UNKNOWN (bien descartados). ⚠️ La 6ª entidad aún NO está en producción (falta redeploy).
+
+- [ ] **⚠️ HALLAZGO OPERATIVO — barrido profundo satura Croma (2026-08-16).** Barrido completo de las 6
+      entidades (`--from 2025-01-01 --max-detail 400 --concurrency 5`, ventana amplia): 2660 procesos →
+      668 prefiltrados → 400 detalles pero **331 FALLIDOS (83%)** por 502/timeout tras agotar reintentos;
+      **2h28m** de corrida; solo **3 oportunidades** (todas DILOF, guard 5/5 OK). Dos lecturas: (1) la
+      **corrección aguantó** — 83% de fallos y aun así completó y verificó las 3 válidas; el guard + el
+      skip-on-error son robustos. (2) Un sweep agresivo (400 lookups sostenidos, conc. 5) hace que Croma
+      **throttlee la API key**. **Recomendación:** para barridos profundos bajar `--concurrency` a 2-3 y/o
+      subir el techo con espaciado; el **default de producción (maxDetail 60, ventana 7d)** es el sobre
+      correcto y NO sufre esto (la corrida DILOF de 60 lookups dio 0 fallidos). NO regenerar `demo-run.json`
+      desde esta corrida degradada — las 3 oportunidades son las mismas de la versión limpia.
 
 - [~] **Conseguir 3–5 NITs de entidades que SÍ compran vehículos** — 5 cargadas y verificadas
       (DILOF, Antioquia, INVÍAS, Distrito CT+i Medellín, Cundinamarca). Se puede seguir sumando
