@@ -128,15 +128,17 @@ Documento-norte del reto: `RETO.md`
       - Recordar: `/api/market` sigue con el bug de "todo en cero" (abajo) — no bloquea el panel, pero
         no lucirlo en el video hasta arreglarlo.
 
-- [ ] **⚡ Paralelizar la fase de detalle del pipeline** (mejora del panel en vivo). Hoy en
-      `runMonitoring` los `croma.process(notice_uid)` se hacen **secuenciales** (uno tras otro),
-      cada uno gateado por el `RateLimiter`; una corrida en frío con el tope `maxDetail=60` puede
-      superar 60s. **Fix:** cola con concurrencia acotada (p.ej. 5 en vuelo) que tira de los
-      candidatos; el `RateLimiter` ya garantiza el techo por minuto, así que la corrección se
-      mantiene. Caveats a manejar: el tope `maxDetail` necesita contador atómico (no `if` dentro
-      del loop), y el orden de los eventos `progress`/`opportunity` deja de ser determinista
-      (el panel ya los pinta como llegan, así que es aceptable). Beneficio: corrida ~concurrencia
-      veces más rápida ⇒ demo/video más ágil. Aplica igual a `market.ts` (misma fase secuencial).
+- [x] **⚡ Paralelizar la fase de detalle del pipeline** — HECHO (2026-08-16, commit `68fd885`).
+      Pool de workers con concurrencia acotada (default 5, opción `detailConcurrency`) que tira de
+      un cursor compartido, tanto en `runMonitoring` como en `analyzeMarket`. El tope `maxDetail`
+      se **reserva de forma atómica** (sin `await` entre el check y el `++` ⇒ indivisible por ser
+      monohilo), así que nunca se pasa. El `RateLimiter` del cliente sigue garantizando el techo/min
+      ⇒ la corrección se mantiene; la paralelización colapsa la latencia dentro de cada ventana de
+      60s (10 seriales ~20-30s de espera → concurrentes casi instantáneo). En `market.ts` además las
+      listas por entidad van en `Promise.all` y el presupuesto por entidad se respeta con un `slice`.
+      **Nota:** una corrida EN FRÍO de 60 detalles sigue teniendo piso ~6 min por `maxCallsPerMin=10`
+      (el rate-limit, no la latencia, es el cuello); el beneficio se nota en corridas tibias/parciales.
+      Verificado e2e: DILOF 500→102→60 (0 fallidos)→3 oportunidades, guard 5/5 OK en las tres.
 
 - [ ] **🐞 `/api/market` devuelve TODO EN CERO en producción** (verificado e2e 2026-08-16, 02:05).
       Corrida real contra el VPS: `http=200`, `t=208s`, **detail_lookups=40 pero contracts=0**,
@@ -166,12 +168,16 @@ Documento-norte del reto: `RETO.md`
         Verificado en vivo: 4 contratos, $7.95B, 3 proveedores (incl. IMPLESI, no sembrado),
         2 entidades, 3 sectores; endpoint público en ~0.5s tras warm-up.
 
-- [ ] **📈 (Mejora mercado) Ampliar la lista de entidades compradoras para "engordar" el mercado.**
-      Hoy `/api/market` barre solo las 4 entidades de `data/entities.json`, por eso el mercado sale
-      real pero pequeño (4 contratos). Sumar más compradores verificados (gobernaciones grandes,
-      Ejército/Fuerzas Militares, Agencia Logística FF.MM., alcaldías capitales, INVÍAS, empresas de
-      servicios públicos) daría un mercado por sector mucho más rico. Verificar cada NIT con
-      `secop_processes_by_entity` antes de cargarlo y subir `maxDetail`/`perEntity` en proporción.
+- [~] **📈 (Mejora mercado) Ampliar la lista de entidades compradoras** — AVANCE (2026-08-16, `68fd885`).
+      +1 verificada: **Departamento de Cundinamarca `899999114`** (COMPRAVENTA PARQUE AUTOMOTOR $2.70B,
+      VEHÍCULOS ESPECIALES NECROMOVIL $2.67B, adjudicados). Ahora `entities.json` tiene **5** compradoras.
+      **Descartadas** contra Croma en la misma sesión (0 adquisiciones de vehículos en la ventana):
+      Agencia Logística FF.MM. `899999162` (solo mantenimiento/tecnomecánica), Valle/Sec. Paz `890399029`,
+      Santander `890201235`. MinDefensa `899999095` → 0 procesos. Seguir sumando: probar alcaldías
+      capitales y otras gobernaciones con `secop_processes_by_entity` (filtro: `contract_type`∈bienes +
+      nombre vehículo + precio≥30M + estado adjudicado) antes de cargar. **Ojo:** subir `maxDetail`/`perEntity`
+      en proporción al nº de entidades, o el barrido de mercado se reparte muy fino.
+      ⚠️ Requiere **redeploy** (`deploy-vps.sh`, con tu llave SSH) para que producción tome los NITs nuevos.
 
 - [ ] **Conseguir 3–5 NITs de entidades que SÍ compran vehículos** y verificarlos con Croma
       (`secop_processes_by_entity`). Candidatos: gobernaciones, alcaldías grandes, Policía Nacional,
