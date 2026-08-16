@@ -10,8 +10,10 @@
     :root {
       --chat--color--primary: #3ea6ff;
       --chat--color--secondary: #33d69f;
-      --chat--window--width: 400px;
-      --chat--window--height: 600px;
+      /* Dimensiones RESPONSIVAS: cómodas en escritorio, nunca se salen del viewport.
+         min() acota al tamaño de pantalla; dvh evita que la barra del navegador móvil la corte. */
+      --chat--window--width: min(460px, 94vw);
+      --chat--window--height: min(680px, calc(100dvh - 120px));
       --chat--header--background: #151b30;
       --chat--header--color: #e8ecf5;
       --chat--heading--font-size: 18px;
@@ -21,6 +23,27 @@
       --chat--message--user--background: #3ea6ff;
       --chat--message--user--color: #04121f;
       --chat--toggle--background: #3ea6ff;
+      /* Comodidad de lectura/escritura */
+      --chat--message--font-size: 14.5px;
+      --chat--message-line-height: 1.5;
+      --chat--input--font-size: 15px;
+      --chat--spacing: 14px;
+      --chat--border-radius: 12px;
+      --chat--message--border-radius: 12px;
+    }
+    /* Móvil / pantallas angostas: casi todo el ancho y pegado a la esquina para máxima comodidad. */
+    @media (max-width:640px){
+      :root {
+        --chat--window--width: 96vw;
+        --chat--window--height: calc(100dvh - 92px);
+        --chat--window--right: 2vw;
+      }
+    }
+    /* En escritorio el panel de trazabilidad ocupa el riel derecho (340px). Corremos TODO el
+       widget (la var oficial posiciona el wrapper que contiene ventana + botón) a la izquierda
+       de ese riel para que no queden tapados. */
+    @media (min-width:1101px){
+      :root { --chat--window--right: 360px; }
     }
     :root { --bg:#0b1020; --card:#151b30; --ink:#e8ecf5; --mut:#93a0bd; --acc:#3ea6ff; --hi:#ff5d5d; --ok:#33d69f; }
     * { box-sizing:border-box; }
