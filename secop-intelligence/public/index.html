@@ -98,7 +98,7 @@
     <div class="meta" id="meta">Configura filtros y pulsa <b>Buscar</b>. (Requiere CROMA_API_KEY en el servidor.)</div>
     <table>
       <thead>
-        <tr><th>Score</th><th>Línea</th><th>Entidad</th><th>Objeto</th><th>Valor est.</th><th>Cierre</th><th>Alertas</th><th></th></tr>
+        <tr><th>Score</th><th>Línea</th><th>Entidad</th><th>Objeto</th><th>Valor est.</th><th>Cant./Unit. aprox.</th><th>Cierre</th><th>Alertas</th><th></th></tr>
       </thead>
       <tbody id="rows"></tbody>
     </table>
@@ -184,6 +184,7 @@
             <td>${o.entity_name ?? '—'}<br><span style="color:var(--mut);font-size:11px">${o.entity_nit ?? ''}${o.department?` · ${o.department}`:''}</span></td>
             <td>${(o.object || '').slice(0,120)}</td>
             <td>${cop(o.estimated_value)}</td>
+            <td>${o.estimated_quantity!=null?`${o.estimated_quantity} u · ${cop(o.estimated_unit_price)}`:'<span style="color:var(--mut)">—</span>'}</td>
             <td>${o.closing_date ?? '—'}${o.days_to_close!=null?`<br><span style="color:var(--mut);font-size:11px">${o.days_to_close} d</span>`:''}</td>
             <td>${o.alerts.map((a)=>`<span class="pill ${['high_value','urgent_close','new_energy_segment'].includes(a)?'hi':''}">${a}</span>`).join('')}</td>
             <td>${o.secop_link?`<a href="${o.secop_link}" target="_blank">SECOP↗</a>`:''}</td>

@@ -1,6 +1,6 @@
 {
   "_note": "Demo del motor de clasificación/scoring/alertas. Objetos representativos de SECOP + 1 registro REAL de Croma (CO1.NTC.10710152, correctamente filtrado como UNKNOWN). La conectividad en vivo con Croma se probó por separado: 1.869 procesos reales de la UdeA recuperados el 2026-08-15.",
-  "timestamp": "2026-08-16T03:08:35.098Z",
+  "timestamp": "2026-08-16T05:45:35.763Z",
   "total_processed": 6,
   "filtered_unknown": 1,
   "total_count": 5,
@@ -18,6 +18,8 @@
       "days_to_close": 10,
       "foton_line": "NEW_ENERGY_PICKUP",
       "line_confidence": 0.95,
+      "estimated_quantity": 3,
+      "estimated_unit_price": 150000000,
       "scoring": {
         "value_score": 27,
         "urgency_score": 20,
@@ -46,6 +48,8 @@
       "days_to_close": 40,
       "foton_line": "PICKUP",
       "line_confidence": 0.9,
+      "estimated_quantity": 5,
+      "estimated_unit_price": 104000000,
       "scoring": {
         "value_score": 30,
         "urgency_score": 10,
@@ -72,6 +76,8 @@
       "days_to_close": 12,
       "foton_line": "PICKUP_MHEV",
       "line_confidence": 0.93,
+      "estimated_quantity": null,
+      "estimated_unit_price": null,
       "scoring": {
         "value_score": 10.8,
         "urgency_score": 20,
@@ -99,6 +105,8 @@
       "days_to_close": 18,
       "foton_line": "AUV_VAN",
       "line_confidence": 0.83,
+      "estimated_quantity": null,
+      "estimated_unit_price": null,
       "scoring": {
         "value_score": 14.4,
         "urgency_score": 15,
@@ -125,6 +133,8 @@
       "days_to_close": 25,
       "foton_line": "LDT",
       "line_confidence": 0.86,
+      "estimated_quantity": null,
+      "estimated_unit_price": null,
       "scoring": {
         "value_score": 22.8,
         "urgency_score": 15,

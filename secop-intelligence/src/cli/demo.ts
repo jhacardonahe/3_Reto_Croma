@@ -8,6 +8,7 @@ import { config } from '../config.js';
 import { classifyFotonLine } from '../modules/classification.js';
 import { evaluateAlerts } from '../modules/alerting.js';
 import { calculateOpportunityScore } from '../utils/scoring.js';
+import { estimateUnits } from '../utils/estimate.js';
 import { daysUntil } from '../utils/date.js';
 import type { OpportunityResult } from '../types.js';
 
@@ -100,6 +101,7 @@ for (const s of SAMPLES) {
     days_to_close: daysToClose,
     foton_line: classification.line,
     line_confidence: classification.confidence,
+    ...estimateUnits(s.object, s.base_price),
     scoring,
     alerts: [],
     secop_link: `https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=${s.notice_uid}`,

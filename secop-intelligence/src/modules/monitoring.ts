@@ -3,6 +3,7 @@ import { entities as configuredEntities, type EntityConfig, GOODS_CONTRACT_TYPES
 import { classifyFotonLine } from './classification.js';
 import { evaluateAlerts } from './alerting.js';
 import { calculateOpportunityScore } from '../utils/scoring.js';
+import { estimateUnits } from '../utils/estimate.js';
 import { daysUntil, daysAgo } from '../utils/date.js';
 import type { OpportunityResult, ProcessSummary } from '../types.js';
 
@@ -125,6 +126,7 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
       days_to_close: daysToClose,
       foton_line: classification.line,
       line_confidence: classification.confidence,
+      ...estimateUnits(object, estimatedValue),
       scoring,
       alerts: [],
       secop_link: cand.summary.url ?? header?.url ?? null,

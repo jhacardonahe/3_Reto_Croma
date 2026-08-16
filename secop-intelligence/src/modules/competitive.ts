@@ -1,6 +1,7 @@
 import { croma } from '../croma/client.js';
 import { competitors } from '../config.js';
 import { classifyFotonLine } from './classification.js';
+import { estimateUnits } from '../utils/estimate.js';
 import type { CompetitorAnalysis, CompetitorContract, Contract } from '../types.js';
 
 export interface CompetitorOptions {
@@ -17,26 +18,6 @@ export interface CompetitorOptions {
 /** minúsculas + sin tildes, para comparar. */
 function fold(s: string | null | undefined): string {
   return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-}
-
-// Nouns de vehículos para estimar cantidad desde el texto del objeto.
-const VEH_NOUN = 'camionetas?|veh[ií]culos?|camiones?|cami[oó]n|vans?|furgones?|furg[oó]n|microbuses?|microb[uú]s|motocicletas?|pick[- ]?ups?|suv|autom[oó]viles?|autom[oó]vil|busetas?|buses?|volquetas?|ambulancias?';
-
-/**
- * Estima cantidad de vehículos y precio unitario a partir del TEXTO del objeto
- * (ej. "LOTE 1: 5 CAMIONETAS..."). Es aproximado y NO oficial: SECOP no expone
- * cantidad ni precio unitario como dato estructurado (viven en los pliegos PDF).
- */
-function estimateUnits(object: string | null, value: number | null): { estimated_quantity: number | null; estimated_unit_price: number | null } {
-  // Capta "5 camionetas", "(5) vehículos", "Cinco (5) camionetas", "5) camiones".
-  // Toma la cantidad TITULAR (máximo match) en vez de sumar, para no duplicar cuando
-  // una misma compra se describe con dos sustantivos ("5 vehículos tipo camioneta").
-  const re = new RegExp(`\\(?(\\d{1,4})\\)?\\s+(?:${VEH_NOUN})`, 'gi');
-  let qty = 0;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(object ?? '')) !== null) qty = Math.max(qty, Number(m[1]));
-  if (qty > 0 && value) return { estimated_quantity: qty, estimated_unit_price: Math.round(value / qty) };
-  return { estimated_quantity: qty > 0 ? qty : null, estimated_unit_price: null };
 }
 
 /**

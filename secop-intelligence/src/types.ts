@@ -229,6 +229,8 @@ export interface OpportunityResult {
   days_to_close: number | null;
   foton_line: FotonLine;
   line_confidence: number;
+  estimated_quantity: number | null; // cantidad estimada del texto (aprox., no oficial)
+  estimated_unit_price: number | null; // valor estimado / cantidad
   scoring: ScoreBreakdown;
   alerts: string[];
   secop_link: string | null;
