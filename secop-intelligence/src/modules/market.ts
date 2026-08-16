@@ -18,6 +18,12 @@ function fold(s: string | null | undefined): string {
   return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
+// Caché en memoria del resultado ensamblado (el sweep es caro por el rate-limit de
+// Croma). La primera corrida puebla; las siguientes (incluido el demo) se sirven al
+// instante. TTL 30 min. Clave por los parámetros que cambian el barrido/filtro.
+const RESULT_TTL_MS = 30 * 60 * 1000;
+const resultCache = new Map<string, { at: number; data: MarketAnalysis }>();
+
 // Estados que indican que el proceso YA fue adjudicado → su detalle trae contratos
 // (proveedor + valor). Los procesos "en evaluación/publicado" aún no tienen contratos.
 const AWARDED_STATUS = ['seleccion', 'adjudic', 'celebr', 'ejecu', 'termin', 'liquid'];
@@ -47,8 +53,12 @@ function isAwardedVehicle(p: ProcessSummary): boolean {
 export async function analyzeMarket(opts: MarketOptions = {}): Promise<MarketAnalysis> {
   const fromDate = opts.fromDate ?? '';
   const toDate = opts.toDate ?? '';
-  const maxDetail = opts.maxDetailLookups ?? 40;
+  const maxDetail = opts.maxDetailLookups ?? 18;
   const targetNits = opts.entityNits?.length ? opts.entityNits : configuredEntities.map((e) => e.nit);
+
+  const cacheKey = JSON.stringify({ targetNits, fromDate, toDate, line: opts.line ?? '', department: opts.department ?? '', keyword: opts.keyword ?? '', maxDetail });
+  const cached = resultCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < RESULT_TTL_MS) return cached.data;
 
   let processesSeen = 0;
   let detailLookups = 0;
@@ -129,7 +139,7 @@ export async function analyzeMarket(opts: MarketOptions = {}): Promise<MarketAna
   const totalValue = filtered.reduce((a, r) => a + (r.value ?? 0), 0);
   const estimatedUnits = filtered.reduce((a, r) => a + (r.estimated_quantity ?? 0), 0);
 
-  return {
+  const result: MarketAnalysis = {
     filters: {
       line: opts.line || null,
       department: opts.department || null,
@@ -151,6 +161,8 @@ export async function analyzeMarket(opts: MarketOptions = {}): Promise<MarketAna
     by_provider: byProvider.slice(0, 8),
     contracts: filtered.sort((a, b) => (b.value ?? 0) - (a.value ?? 0)).slice(0, 60),
   };
+  resultCache.set(cacheKey, { at: Date.now(), data: result });
+  return result;
 }
 
 function aggregate<T extends Record<string, unknown>>(
