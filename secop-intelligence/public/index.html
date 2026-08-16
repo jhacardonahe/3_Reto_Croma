@@ -28,6 +28,14 @@
     .line { font-weight:600; color:var(--acc); }
     a { color:var(--acc); }
     .empty { color:var(--mut); padding:30px 0; }
+    h2.sec { font-size:15px; margin:4px 0; }
+    .cards { display:flex; gap:12px; flex-wrap:wrap; margin:14px 0; }
+    .card { background:var(--card); border:1px solid #23304f; border-radius:12px; padding:14px 16px; min-width:150px; }
+    .card .k { color:var(--mut); font-size:12px; }
+    .card .v { font-size:20px; font-weight:700; margin-top:4px; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
+    @media (max-width:820px){ .grid2 { grid-template-columns:1fr; } }
+    .subh { color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin:6px 0; }
   </style>
 </head>
 <body>
@@ -62,6 +70,24 @@
       <tbody id="rows"></tbody>
     </table>
     <div class="empty" id="empty" style="display:none">Sin resultados para esos filtros.</div>
+  </main>
+
+  <div class="bar" style="border-top:1px solid #23304f; margin-top:12px">
+    <div style="flex-basis:100%"><h2 class="sec">🏁 Inteligencia competitiva</h2></div>
+    <div>
+      <label>NIT del competidor</label>
+      <input id="cnit" size="16" value="860034604" placeholder="860034604" />
+    </div>
+    <div>
+      <label>Desde (yyyy-mm-dd)</label>
+      <input id="cfrom" size="12" value="2024-01-01" />
+    </div>
+    <button id="cgo">Analizar competidor</button>
+  </div>
+
+  <main>
+    <div class="meta" id="cmeta">Ej.: <b>860034604</b> (AUTOMAYOR S.A.) · <b>830096621</b> (EPIA SAS). Pulsa <b>Analizar</b>.</div>
+    <div id="cout"></div>
   </main>
 
   <script>
@@ -105,6 +131,48 @@
 
     $('go').onclick = load;
     $('csv').onclick = () => window.open('/api/opportunities?format=csv&' + qs(), '_blank');
+
+    async function loadComp() {
+      const nit = $('cnit').value.trim();
+      if (!nit) { $('cmeta').textContent = 'Ingresa un NIT.'; return; }
+      $('cgo').disabled = true; $('cmeta').textContent = 'Consultando Croma…'; $('cout').innerHTML = '';
+      try {
+        const r = await fetch('/api/competitor-analysis', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ competitor_nit: nit, period: { from_date: $('cfrom').value.trim() || undefined } }),
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Error');
+        const s = d.statistics || {};
+        const cards = [
+          ['Contratos ganados', s.total_contracts ?? 0],
+          ['Valor total', cop(s.total_value)],
+          ['Ticket promedio', cop(s.average_contract_value)],
+          ['Sanciones', d.sanctions_count ?? 0],
+        ];
+        const byLine = Object.entries(d.by_line || {}).sort((a, b) => (b[1].total_value || 0) - (a[1].total_value || 0));
+        const lineRows = byLine.map(([k, v]) => `<tr><td class="line">${k}</td><td>${v.contracts_won}</td><td>${cop(v.total_value)}</td><td>${cop(v.average_price)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">—</td></tr>';
+        const ents = (d.top_entities || []).map((e) => `<tr><td>${e.entity ?? '—'}<br><span style="color:var(--mut);font-size:11px">${e.entity_nit ?? ''}</span></td><td>${e.contracts}</td><td>${cop(e.value)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">—</td></tr>';
+        $('cmeta').innerHTML = `<b>${d.competitor_name || nit}</b> · NIT ${d.competitor_nit} · tendencia <b>${d.trend ?? '—'}</b>`;
+        $('cout').innerHTML = `
+          <div class="cards">${cards.map(([k, v]) => `<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
+          <div class="grid2">
+            <div>
+              <div class="subh">Contratos por línea Foton</div>
+              <table><thead><tr><th>Línea</th><th>#</th><th>Valor</th><th>Prom.</th></tr></thead><tbody>${lineRows}</tbody></table>
+            </div>
+            <div>
+              <div class="subh">Entidades top</div>
+              <table><thead><tr><th>Entidad</th><th>#</th><th>Valor</th></tr></thead><tbody>${ents}</tbody></table>
+            </div>
+          </div>`;
+      } catch (e) {
+        $('cmeta').textContent = '⚠️ ' + e.message;
+      } finally {
+        $('cgo').disabled = false;
+      }
+    }
+    $('cgo').onclick = loadComp;
   </script>
 </body>
 </html>
