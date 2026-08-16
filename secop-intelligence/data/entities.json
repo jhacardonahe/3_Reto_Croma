@@ -45,6 +45,15 @@
       "verified": true,
       "verified_at": "2026-08-16",
       "note": "Compradora de flota verificada (secop_processes_by_entity, ventana 2025+): 'COMPRAVENTA PARQUE AUTOMOTOR' $2.70B y 'ADQUISICIÓN DE VEHÍCULOS ESPECIALES (NECROMOVIL)' $2.67B (seleccionado/adjudicado) + $557M municipio de Silvania. Adquisición pura de alto ticket. Descartadas en la misma sesión (0 adquisiciones de vehículos en la ventana): Agencia Logística FFMM 899999162 (solo mantenimiento), Valle/Sec. Paz 890399029, Santander 890201235."
+    },
+    {
+      "nit": "830090486",
+      "name": "Dirección de Tránsito y Transporte — Policía Nacional",
+      "type": "public_entity",
+      "priority": "high",
+      "verified": true,
+      "verified_at": "2026-08-16",
+      "note": "Cosechada de los contratos de EPIA SAS (proveedor de vehículos) y verificada con secop_processes_by_entity: 'ADQUISICIÓN DE EQUIPO AUTOMOTOR TIPO NECROMÓVIL' $2.12B (Seleccionado) + necromóvil $1.16B, mismo perfil de flota policial que DILOF (el necromóvil suele ir sobre chasis van → mapea a AUV_VAN). También compra motocicletas (UNKNOWN para Foton, se descartan). Método de descubrimiento: secop_contracts_by_provider(EPIA 830096621) → 52 contratos → compradores reales de vehículos."
     }
   ]
 }

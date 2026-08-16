@@ -16,6 +16,8 @@ async function main(): Promise<void> {
     entityNits: arg('nits')?.split(',').map((s) => s.trim()).filter(Boolean),
     limit: arg('limit') ? Number(arg('limit')) : 50,
     minScore: arg('min-score') ? Number(arg('min-score')) : undefined,
+    maxDetailLookups: arg('max-detail') ? Number(arg('max-detail')) : undefined,
+    detailConcurrency: arg('concurrency') ? Number(arg('concurrency')) : undefined,
     segments: arg('segment')?.split(',').map((s) => s.trim()).filter(Boolean),
     department: arg('department'),
     keyword: arg('keyword'),
