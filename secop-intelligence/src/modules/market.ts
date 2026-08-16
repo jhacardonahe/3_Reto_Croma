@@ -47,7 +47,7 @@ function isAwardedVehicle(p: ProcessSummary): boolean {
 export async function analyzeMarket(opts: MarketOptions = {}): Promise<MarketAnalysis> {
   const fromDate = opts.fromDate ?? '';
   const toDate = opts.toDate ?? '';
-  const maxDetail = opts.maxDetailLookups ?? 30;
+  const maxDetail = opts.maxDetailLookups ?? 40;
   const targetNits = opts.entityNits?.length ? opts.entityNits : configuredEntities.map((e) => e.nit);
 
   let processesSeen = 0;
@@ -55,15 +55,22 @@ export async function analyzeMarket(opts: MarketOptions = {}): Promise<MarketAna
   const rows: MarketContract[] = [];
   const seenContract = new Set<string>();
 
+  // Reparte el presupuesto de detalles entre entidades (breadth), para que todas
+  // contribuyan y no se agote en la primera (que puede tener muchas motos/embarcaciones).
+  const perEntity = Math.max(6, Math.ceil(maxDetail / targetNits.length));
+
   outer: for (const nit of targetNits) {
     const res = await croma.processesByEntity(nit, fromDate, toDate).catch(() => null);
     if (!res) continue;
     const candidates = res.processes.filter(isAwardedVehicle);
     processesSeen += res.processes.length;
 
+    let entityLookups = 0;
     for (const cand of candidates) {
       if (detailLookups >= maxDetail) break outer;
+      if (entityLookups >= perEntity) break;
       detailLookups++;
+      entityLookups++;
       const detail = await croma.process(cand.notice_uid).catch(() => null);
       if (!detail || !detail.found) continue;
       const department = (detail.process?.entity_department as string | undefined) ?? null;
