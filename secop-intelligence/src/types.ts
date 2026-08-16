@@ -234,10 +234,30 @@ export interface OpportunityResult {
   secop_link: string | null;
 }
 
+/** Contrato del competidor con cantidad/precio unitario ESTIMADOS del texto del objeto (aprox., no oficial). */
+export interface CompetitorContract {
+  contract_id: string | null;
+  object: string | null;
+  entity: string | null;
+  entity_nit: string | null;
+  value: number | null;
+  line: FotonLine;
+  sign_date: string | null;
+  status: string | null;
+  estimated_quantity: number | null;
+  estimated_unit_price: number | null;
+}
+
 export interface CompetitorAnalysis {
   competitor_nit: string;
   competitor_name: string | null;
   period: { from_date: string | null; to_date: string | null };
+  filters: {
+    line: string | null;
+    entity_nit: string | null;
+    min_value: number | null;
+    keyword: string | null;
+  };
   statistics: {
     total_contracts: number;
     total_value: number;
@@ -246,6 +266,7 @@ export interface CompetitorAnalysis {
   };
   by_line: Record<string, { contracts_won: number; total_value: number; average_price: number }>;
   top_entities: { entity: string | null; entity_nit: string | null; contracts: number; value: number }[];
+  contracts: CompetitorContract[];
   sanctions_count: number;
   trend: 'increasing' | 'stable' | 'decreasing';
 }

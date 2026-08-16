@@ -109,11 +109,41 @@
     <div style="flex-basis:100%"><h2 class="sec">🏁 Inteligencia competitiva</h2></div>
     <div>
       <label>NIT del competidor</label>
-      <input id="cnit" size="16" value="860034604" placeholder="860034604" />
+      <input id="cnit" size="14" value="860034604" placeholder="860034604" />
     </div>
     <div>
-      <label>Desde (yyyy-mm-dd)</label>
-      <input id="cfrom" size="12" value="2024-01-01" />
+      <label>Categoría</label>
+      <select id="cline">
+        <option value="">Todas</option>
+        <option>NEW_ENERGY_PICKUP</option>
+        <option>PICKUP_MHEV</option>
+        <option>PICKUP</option>
+        <option>NEW_ENERGY</option>
+        <option>AUV_VAN</option>
+        <option>LDT</option>
+        <option>HDT</option>
+        <option>SPECIAL</option>
+      </select>
+    </div>
+    <div>
+      <label>Desde</label>
+      <input id="cfrom" size="10" value="2024-01-01" placeholder="yyyy-mm-dd" />
+    </div>
+    <div>
+      <label>Hasta</label>
+      <input id="cto" size="10" placeholder="yyyy-mm-dd" />
+    </div>
+    <div>
+      <label>Entidad (NIT)</label>
+      <input id="cent" size="11" placeholder="opcional" />
+    </div>
+    <div>
+      <label>Valor mín. (COP)</label>
+      <input id="cmin" size="11" placeholder="ej. 100000000" />
+    </div>
+    <div>
+      <label>Palabra clave</label>
+      <input id="ckw" size="12" placeholder="blindada, híbrida…" />
     </div>
     <button id="cgo">Analizar competidor</button>
   </div>
@@ -175,7 +205,14 @@
       try {
         const r = await fetch('/api/competitor-analysis', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ competitor_nit: nit, period: { from_date: $('cfrom').value.trim() || undefined } }),
+          body: JSON.stringify({
+            competitor_nit: nit,
+            period: { from_date: $('cfrom').value.trim() || undefined, to_date: $('cto').value.trim() || undefined },
+            line: $('cline').value || undefined,
+            entity_nit: $('cent').value.trim() || undefined,
+            min_value: $('cmin').value.trim() || undefined,
+            keyword: $('ckw').value.trim() || undefined,
+          }),
         });
         const d = await r.json();
         if (!r.ok) throw new Error(d.error || 'Error');
@@ -189,19 +226,34 @@
         const byLine = Object.entries(d.by_line || {}).sort((a, b) => (b[1].total_value || 0) - (a[1].total_value || 0));
         const lineRows = byLine.map(([k, v]) => `<tr><td class="line">${k}</td><td>${v.contracts_won}</td><td>${cop(v.total_value)}</td><td>${cop(v.average_price)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">—</td></tr>';
         const ents = (d.top_entities || []).map((e) => `<tr><td>${e.entity ?? '—'}<br><span style="color:var(--mut);font-size:11px">${e.entity_nit ?? ''}</span></td><td>${e.contracts}</td><td>${cop(e.value)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">—</td></tr>';
-        $('cmeta').innerHTML = `<b>${d.competitor_name || nit}</b> · NIT ${d.competitor_nit} · tendencia <b>${d.trend ?? '—'}</b>`;
+        const cts = (d.contracts || []).map((c) => `
+          <tr>
+            <td class="line">${c.line}</td>
+            <td>${(c.object || '—').slice(0,90)}<br><span style="color:var(--mut);font-size:11px">${c.entity ?? ''}${c.sign_date?` · ${c.sign_date}`:''}</span></td>
+            <td>${cop(c.value)}</td>
+            <td style="text-align:right">${c.estimated_quantity ?? '—'}</td>
+            <td style="text-align:right">${c.estimated_unit_price!=null?cop(c.estimated_unit_price):'—'}</td>
+          </tr>`).join('') || '<tr><td colspan="5" class="empty">Sin contratos para esos filtros.</td></tr>';
+        const f = d.filters || {};
+        const chips = [f.line && `categoría: ${f.line}`, f.entity_nit && `entidad: ${f.entity_nit}`, f.min_value && `≥ ${cop(f.min_value)}`, f.keyword && `“${f.keyword}”`].filter(Boolean).join(' · ');
+        $('cmeta').innerHTML = `<b>${d.competitor_name || nit}</b> · NIT ${d.competitor_nit} · tendencia <b>${d.trend ?? '—'}</b>${chips?` · <span style="color:var(--acc)">${chips}</span>`:''}`;
         $('cout').innerHTML = `
           <div class="cards">${cards.map(([k, v]) => `<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('')}</div>
           <div class="grid2">
             <div>
-              <div class="subh">Contratos por línea Foton</div>
+              <div class="subh">Contratos por categoría (línea Foton)</div>
               <table><thead><tr><th>Línea</th><th>#</th><th>Valor</th><th>Prom.</th></tr></thead><tbody>${lineRows}</tbody></table>
             </div>
             <div>
               <div class="subh">Entidades top</div>
               <table><thead><tr><th>Entidad</th><th>#</th><th>Valor</th></tr></thead><tbody>${ents}</tbody></table>
             </div>
-          </div>`;
+          </div>
+          <div class="subh" style="margin-top:18px">Contratos ganados · cantidad y precio unitario <span style="color:var(--mut);text-transform:none;letter-spacing:0">(estimados del texto del objeto — aprox., no oficial)</span></div>
+          <table>
+            <thead><tr><th>Línea</th><th>Objeto / entidad</th><th>Valor total</th><th style="text-align:right">Cant.</th><th style="text-align:right">Unit. aprox.</th></tr></thead>
+            <tbody>${cts}</tbody>
+          </table>`;
       } catch (e) {
         $('cmeta').textContent = '⚠️ ' + e.message;
       } finally {

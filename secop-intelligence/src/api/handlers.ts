@@ -64,7 +64,16 @@ export async function postCompetitorAnalysis(req: Request, res: Response): Promi
       return;
     }
     const period = req.body?.period ?? {};
-    const analysis = await analyzeCompetitor(nit, { fromDate: period.from_date, toDate: period.to_date });
+    const b = req.body ?? {};
+    const minValueRaw = b.min_value ?? b.filters?.min_value;
+    const analysis = await analyzeCompetitor(nit, {
+      fromDate: (b.from_date ?? period.from_date) || undefined,
+      toDate: (b.to_date ?? period.to_date) || undefined,
+      line: (b.line ?? b.filters?.line) || undefined,
+      entityNit: (b.entity_nit ?? b.filters?.entity_nit) || undefined,
+      minValue: minValueRaw != null && minValueRaw !== '' ? Number(minValueRaw) : undefined,
+      keyword: (b.keyword ?? b.filters?.keyword) || undefined,
+    });
     res.json(analysis);
   } catch (err) {
     fail(res, err);

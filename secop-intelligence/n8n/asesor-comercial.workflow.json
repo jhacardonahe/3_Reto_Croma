@@ -87,7 +87,7 @@
     },
     {
       "parameters": {
-        "toolDescription": "Analiza el historial de contratación pública de un competidor por su NIT: contratos ganados, valor total, desglose por línea Foton, entidades top y tendencia. Úsala cuando pregunten por un competidor o proveedor.",
+        "toolDescription": "Analiza el historial de contratación pública de un competidor por su NIT: contratos ganados, valor total, desglose por categoría (línea Foton), entidades top, tendencia y lista de contratos con cantidad/precio unitario estimados. Filtros opcionales: categoría, entidad contratante, palabra clave, valor mínimo y período.",
         "method": "POST",
         "url": "https://autodata.jyrmecatronica.com/api/competitor-analysis",
         "sendBody": true,
@@ -95,7 +95,13 @@
         "specifyBody": "keypair",
         "bodyParameters": {
           "parameters": [
-            { "name": "competitor_nit", "value": "={{ $fromAI('competitor_nit', 'NIT del competidor, solo dígitos (ej. 860034604 = AUTOMAYOR S.A.).', 'string') }}" }
+            { "name": "competitor_nit", "value": "={{ $fromAI('competitor_nit', 'NIT del competidor, solo dígitos (ej. 860034604 = AUTOMAYOR S.A.).', 'string') }}" },
+            { "name": "line", "value": "={{ $fromAI('line', 'Categoría/línea Foton exacta para filtrar: NEW_ENERGY_PICKUP, PICKUP_MHEV, PICKUP, NEW_ENERGY, AUV_VAN, LDT, HDT o SPECIAL. Vacío si no aplica.', 'string') }}" },
+            { "name": "entity_nit", "value": "={{ $fromAI('entity_nit', 'NIT de la entidad contratante para filtrar. Vacío si no aplica.', 'string') }}" },
+            { "name": "keyword", "value": "={{ $fromAI('keyword', 'Palabra clave en el objeto del contrato (ej. blindada, híbrida). Vacío si no aplica.', 'string') }}" },
+            { "name": "min_value", "value": "={{ $fromAI('min_value', 'Valor mínimo del contrato en COP (solo número). Vacío si no aplica.', 'string') }}" },
+            { "name": "from_date", "value": "={{ $fromAI('from_date_comp', 'Fecha desde yyyy-mm-dd. Vacío si no aplica.', 'string') }}" },
+            { "name": "to_date", "value": "={{ $fromAI('to_date_comp', 'Fecha hasta yyyy-mm-dd. Vacío si no aplica.', 'string') }}" }
           ]
         },
         "options": {}
