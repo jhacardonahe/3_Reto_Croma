@@ -1,0 +1,147 @@
+{
+  "id": "secopAsesorFoton01",
+  "name": "SECOP Asesor Comercial (Foton)",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "initialMessages": "¡Hola! Soy tu Asesor SECOP–Foton. Puedo:\n• Buscar oportunidades (ej. \"camionetas híbridas en Bogotá\").\n• Analizar un competidor por NIT (ej. \"analiza a AUTOMAYOR 860034604\").\n• Consultar el estado de un contrato por su ID (CO1.PCCNTR....).",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "chat-widget",
+      "name": "Chat Widget",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "webhookId": "secop-asesor-foton"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "Eres el **Asesor Comercial SECOP–Foton**, copiloto de los KAM de LDT Colombia (distribuidor Foton). Ayudas a detectar y priorizar oportunidades de compra pública de vehículos, analizar la competencia y hacer seguimiento a contratos.\n\nHerramientas disponibles:\n- `buscar_oportunidades`: oportunidades de SECOP clasificadas por línea Foton (segmento) y priorizadas por score. Filtros: segmento, departamento, palabra clave, NITs, fecha desde, límite.\n- `analizar_competidor`: historial de contratación pública de un competidor por NIT (contratos, valor total, por línea, entidades top, tendencia).\n- `seguimiento_contrato`: estado y salud de un contrato por su ID (CO1.PCCNTR....).\n\nReglas:\n- Responde SIEMPRE en español, claro y orientado a la acción comercial.\n- Usa las herramientas para responder con DATOS REALES. NUNCA inventes NITs, cifras, notice_uid ni IDs de contrato.\n- Al listar oportunidades resalta: score, línea Foton, entidad, valor estimado (COP) y días al cierre; termina con el siguiente paso sugerido para el KAM.\n- Si falta un dato para usar una herramienta (NIT del competidor, ID de contrato), pídelo con un ejemplo del formato.\n- Cifras en pesos colombianos.\n\nLíneas Foton (segmentos válidos): NEW_ENERGY_PICKUP, PICKUP_MHEV, PICKUP, NEW_ENERGY, AUV_VAN, LDT, HDT, SPECIAL.\n\nIMPORTANTE al llamar `buscar_oportunidades`: incluye SIEMPRE las 5 propiedades del JSON (segment, department, keyword, entity_nits, from_date). Usa cadena vacía \"\" en las que no quieras filtrar; NUNCA omitas una propiedad."
+        }
+      },
+      "id": "asesor",
+      "name": "Asesor Comercial",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [320, 0]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "id": "openai-model",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [120, 260],
+      "credentials": {
+        "openAiApi": {
+          "id": "IDpFYmuewz0FZ8WE",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "memoria",
+      "name": "Memoria",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [300, 260]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca oportunidades de compra pública de vehículos en SECOP, clasificadas por línea Foton (segmento) y priorizadas por score (0-100). Úsala para cualquier pregunta sobre oportunidades o licitaciones. Todos los filtros son opcionales.",
+        "method": "GET",
+        "url": "https://autodata.jyrmecatronica.com/api/opportunities",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            { "name": "segment", "value": "={{ $fromAI('segment', 'Línea Foton exacta: NEW_ENERGY_PICKUP, PICKUP_MHEV, PICKUP, NEW_ENERGY, AUV_VAN, LDT, HDT o SPECIAL. Vacío si no aplica.', 'string') }}" },
+            { "name": "department", "value": "={{ $fromAI('department', 'Departamento o ciudad de la entidad (ej. Antioquia, Bogotá). Vacío si no aplica.', 'string') }}" },
+            { "name": "keyword", "value": "={{ $fromAI('keyword', 'Palabra clave en el objeto del proceso (ej. híbrida, blindada, doble cabina). Vacío si no aplica.', 'string') }}" },
+            { "name": "entity_nits", "value": "={{ $fromAI('entity_nits', 'NITs de entidades separados por coma. Vacío para usar las configuradas.', 'string') }}" },
+            { "name": "from_date", "value": "={{ $fromAI('from_date', 'Fecha desde en formato yyyy-mm-dd. Vacío si no aplica.', 'string') }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tool-opps",
+      "name": "buscar_oportunidades",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [500, 260]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Analiza el historial de contratación pública de un competidor por su NIT: contratos ganados, valor total, desglose por línea Foton, entidades top y tendencia. Úsala cuando pregunten por un competidor o proveedor.",
+        "method": "POST",
+        "url": "https://autodata.jyrmecatronica.com/api/competitor-analysis",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "competitor_nit", "value": "={{ $fromAI('competitor_nit', 'NIT del competidor, solo dígitos (ej. 860034604 = AUTOMAYOR S.A.).', 'string') }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tool-comp",
+      "name": "analizar_competidor",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [680, 260]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Consulta el estado y la salud de un contrato SECOP por su ID (formato CO1.PCCNTR.####): estado de ejecución, garantías, adiciones, retrasos y health score. Úsala cuando pregunten por el seguimiento de un contrato.",
+        "method": "GET",
+        "url": "=https://autodata.jyrmecatronica.com/api/contracts/{{ $fromAI('contract_id', 'ID del contrato, formato CO1.PCCNTR.#### (ej. CO1.PCCNTR.9547105).', 'string') }}/tracking",
+        "options": {}
+      },
+      "id": "tool-track",
+      "name": "seguimiento_contrato",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [860, 260]
+    }
+  ],
+  "connections": {
+    "Chat Widget": {
+      "main": [[{ "node": "Asesor Comercial", "type": "main", "index": 0 }]]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [[{ "node": "Asesor Comercial", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Memoria": {
+      "ai_memory": [[{ "node": "Asesor Comercial", "type": "ai_memory", "index": 0 }]]
+    },
+    "buscar_oportunidades": {
+      "ai_tool": [[{ "node": "Asesor Comercial", "type": "ai_tool", "index": 0 }]]
+    },
+    "analizar_competidor": {
+      "ai_tool": [[{ "node": "Asesor Comercial", "type": "ai_tool", "index": 0 }]]
+    },
+    "seguimiento_contrato": {
+      "ai_tool": [[{ "node": "Asesor Comercial", "type": "ai_tool", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}

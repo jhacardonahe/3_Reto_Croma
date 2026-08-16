@@ -4,7 +4,18 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SECOP Intelligence · Foton × Croma</title>
+  <link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
   <style>
+    /* Widget del Asesor Comercial (n8n chat) en la paleta del dashboard */
+    :root {
+      --chat--color-primary: #3ea6ff;
+      --chat--color-secondary: #33d69f;
+      --chat--window--width: 400px;
+      --chat--window--height: 600px;
+      --chat--header--background: #151b30;
+      --chat--heading--color: #e8ecf5;
+      --chat--toggle--background: #3ea6ff;
+    }
     :root { --bg:#0b1020; --card:#151b30; --ink:#e8ecf5; --mut:#93a0bd; --acc:#3ea6ff; --hi:#ff5d5d; --ok:#33d69f; }
     * { box-sizing:border-box; }
     body { margin:0; font:15px/1.5 system-ui,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
@@ -198,6 +209,29 @@
       }
     }
     $('cgo').onclick = loadComp;
+  </script>
+
+  <!-- Asesor Comercial: chat conversacional (n8n Agent → API SECOP) -->
+  <script type="module">
+    import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
+    createChat({
+      webhookUrl: 'https://n8n.jyrmecatronica.com/webhook/secop-asesor-foton/chat',
+      mode: 'window',
+      showWelcomeScreen: false,
+      initialMessages: [
+        '¡Hola! Soy tu Asesor SECOP–Foton 🚗',
+        'Pregúntame por oportunidades (ej. "camionetas híbridas en Bogotá"), análisis de un competidor por NIT, o el estado de un contrato.'
+      ],
+      i18n: {
+        en: {
+          title: 'Asesor Comercial SECOP–Foton',
+          subtitle: 'Oportunidades · competidores · contratos, en lenguaje natural.',
+          getStarted: 'Nueva conversación',
+          inputPlaceholder: 'Escribe tu pregunta…',
+          closeButtonTooltip: 'Cerrar'
+        }
+      }
+    });
   </script>
 </body>
 </html>
