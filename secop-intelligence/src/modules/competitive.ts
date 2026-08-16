@@ -29,10 +29,12 @@ const VEH_NOUN = 'camionetas?|veh[ií]culos?|camiones?|cami[oó]n|vans?|furgones
  */
 function estimateUnits(object: string | null, value: number | null): { estimated_quantity: number | null; estimated_unit_price: number | null } {
   // Capta "5 camionetas", "(5) vehículos", "Cinco (5) camionetas", "5) camiones".
+  // Toma la cantidad TITULAR (máximo match) en vez de sumar, para no duplicar cuando
+  // una misma compra se describe con dos sustantivos ("5 vehículos tipo camioneta").
   const re = new RegExp(`\\(?(\\d{1,4})\\)?\\s+(?:${VEH_NOUN})`, 'gi');
   let qty = 0;
   let m: RegExpExecArray | null;
-  while ((m = re.exec(object ?? '')) !== null) qty += Number(m[1]);
+  while ((m = re.exec(object ?? '')) !== null) qty = Math.max(qty, Number(m[1]));
   if (qty > 0 && value) return { estimated_quantity: qty, estimated_unit_price: Math.round(value / qty) };
   return { estimated_quantity: qty > 0 ? qty : null, estimated_unit_price: null };
 }
