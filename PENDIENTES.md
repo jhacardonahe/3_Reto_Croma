@@ -65,6 +65,41 @@ Documento-norte del reto: `RETO.md`
 
 ---
 
+### ✅ Cerrado 2026-08-18 (AGENTE VIVO: memoria de barrido + latido + Telegram)
+> Cierra P0-1 y P0-2 de `COMPARATIVA-CENTINELA.md`. Ataca **originalidad**: el sistema
+> deja de esperar a que alguien abra el tablero y **habla primero**.
+- **Memoria de barrido** (`src/modules/seen.ts`, práctica traída de `detect.ts` de Centinela):
+  `notice_uid → hash(fase|estado|valor|cierre|línea)` en `data/cache/seen.json`. Clasifica cada
+  oportunidad como `new` / `changed` / `known`. La huella **excluye score y días al cierre** a
+  propósito: cambian solos con el tiempo y marcarían todo como "actualizado" cada latido.
+  Poda a 120 días sin verse; un archivo corrupto arranca vacío (nunca tumba el barrido).
+- **Latido** (`src/cli/sweep.ts` + `npm run sweep`): barre → compara contra la memoria →
+  envía digest → **guarda la memoria SOLO si el envío salió bien** (si Telegram falla, el
+  próximo latido reintenta; preferimos repetir un aviso a perderlo). `--dry-run` muestra el
+  mensaje sin enviar ni escribir.
+- **Telegram sin dependencias** (`src/notify/telegram.ts`): la Bot API es un POST JSON y
+  `fetch` es nativo. Parte mensajes >4096 en frontera de línea, botones inline solo en el
+  último trozo, y **ningún error se propaga** (notificar jamás tumba el barrido).
+  Probado con fetch inyectado: payload, troceo (4 trozos, máx 4091), 429 y ECONNRESET.
+- **Digest puro** (`src/notify/digest.ts`): un mensaje por corrida con el top-N. Cada
+  oportunidad lleva `notice_uid` + chip del guard de citas → **el estándar de "nada afirmado
+  sin fuente" viaja también al canal nuevo**. Sin novedades ⇒ `null` (el agente calla).
+- **systemd**: `deploy/secop-intelligence-sweep.service` + `.timer` (11/17/23 UTC = 06/12/18
+  Colombia; fijado en UTC para no depender de la zona del VPS). `deploy-vps.sh` instala y
+  activa el timer y propaga `TELEGRAM_*` + `PUBLIC_BASE_URL` al `.env` remoto.
+- **Tablero**: chips **NUEVO** / **ACTUALIZADO** + contador en la barra de meta, leyendo la
+  misma memoria en **solo lectura** (solo el barrido la consume ⇒ abrir el tablero no
+  silencia un aviso pendiente).
+- **Conversación**: `n8n/asesor-telegram.workflow.json` — mismo asesor, Telegram Trigger en
+  vez de Chat Trigger, memoria por `chat.id` y **lista blanca de chats** (sin ella, cualquiera
+  que encuentre el bot gasta cuota de Croma y de OpenAI).
+- **Gate**: `npm run eval` **18/18** (7 casos nuevos, 3 de ellos trampas: *solo pasa el tiempo*
+  → `known`, *sin novedades* → silencio, *`<script>` en el objeto* → escapado). typecheck +
+  build limpios.
+- **Pendiente de operación**: crear el bot en @BotFather, poner `TELEGRAM_BOT_TOKEN` +
+  `TELEGRAM_CHAT_ID` en el `.env` local, redesplegar (`deploy/deploy-vps.sh`) e importar el
+  workflow de Telegram en n8n (reemplazar credencial y `REEMPLAZA_CON_TU_CHAT_ID`).
+
 ## 🤖 Asesor Comercial (agente n8n + widget) — EN PRODUCCIÓN (2026-08-15)
 - Workflow `n8n/asesor-comercial.workflow.json` importado y ACTIVO en el n8n del VPS
   (`docker-caddy-n8n-1`, https://n8n.jyrmecatronica.com), id `secopAsesorFoton01`.

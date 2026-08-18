@@ -3,6 +3,7 @@
 // (verificada en vivo el 2026-08-15) y la referencia oficial de SECOP - Croma API.
 
 import type { Verification, AggregateVerification } from './utils/verify.js';
+import type { Novelty } from './modules/seen.js';
 export type { Verification, VerifyCheck, CheckStatus, AggregateVerification } from './utils/verify.js';
 
 // ----------------------------------------------------------------------------
@@ -239,6 +240,13 @@ export interface OpportunityResult {
   alerts: string[];
   secop_link: string | null;
   verification: Verification; // guard de citas: cada dato afirmado trazado a Croma
+  // Fase y estado crudos de Croma. Alimentan la huella de la memoria de barrido:
+  // su cambio (convocatoria → adjudicado) es lo que hace que el agente vuelva a mirar.
+  phase: string | null;
+  procedure_status: string | null;
+  // Estado frente a la memoria del agente. Lo anota quien tiene el mapa (barrido/API),
+  // no el pipeline: `runMonitoring` sigue siendo puro respecto al estado persistido.
+  novelty?: Novelty;
 }
 
 /** Contrato del competidor con cantidad/precio unitario ESTIMADOS del texto del objeto (aprox., no oficial). */

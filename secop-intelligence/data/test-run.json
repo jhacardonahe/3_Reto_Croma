@@ -1,6 +1,6 @@
 {
   "_note": "Demo del motor de clasificación/scoring/alertas. Objetos representativos de SECOP + 1 registro REAL de Croma (CO1.NTC.10710152, correctamente filtrado como UNKNOWN). La conectividad en vivo con Croma se probó por separado: 1.869 procesos reales de la UdeA recuperados el 2026-08-15.",
-  "timestamp": "2026-08-16T06:24:11.030Z",
+  "timestamp": "2026-08-18T15:52:16.504Z",
   "total_processed": 6,
   "filtered_unknown": 1,
   "total_count": 5,
@@ -13,8 +13,8 @@
       "city": null,
       "object": "Adquisición de 3 camionetas eléctricas doble cabina para el parque automotor institucional, cero emisiones",
       "estimated_value": 450000000,
-      "publication_date": "2026-08-16",
-      "closing_date": "2026-08-26",
+      "publication_date": "2026-08-18",
+      "closing_date": "2026-08-28",
       "days_to_close": 10,
       "foton_line": "NEW_ENERGY_PICKUP",
       "line_confidence": 0.95,
@@ -38,6 +38,8 @@
         "new_energy_segment"
       ],
       "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO001",
+      "phase": "Presentación de oferta",
+      "procedure_status": "Convocado",
       "verification": {
         "ok": true,
         "checked": 5,
@@ -68,15 +70,15 @@
           {
             "field": "closing_date",
             "label": "Fecha de cierre",
-            "claimed": "2026-08-26",
-            "source": "2026-08-26",
+            "claimed": "2026-08-28",
+            "source": "2026-08-28",
             "status": "confirmed"
           },
           {
             "field": "publication_date",
             "label": "Fecha de publicación",
-            "claimed": "2026-08-16",
-            "source": "2026-08-16",
+            "claimed": "2026-08-18",
+            "source": "2026-08-18",
             "status": "confirmed"
           }
         ],
@@ -92,8 +94,8 @@
       "city": null,
       "object": "Suministro de 5 camionetas pick-up 4x4 diésel doble cabina para la Secretaría de Movilidad",
       "estimated_value": 520000000,
-      "publication_date": "2026-08-16",
-      "closing_date": "2026-09-25",
+      "publication_date": "2026-08-18",
+      "closing_date": "2026-09-27",
       "days_to_close": 40,
       "foton_line": "PICKUP",
       "line_confidence": 0.9,
@@ -116,6 +118,8 @@
         "repeated_buyer"
       ],
       "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO002",
+      "phase": "Presentación de oferta",
+      "procedure_status": "Convocado",
       "verification": {
         "ok": true,
         "checked": 5,
@@ -146,15 +150,15 @@
           {
             "field": "closing_date",
             "label": "Fecha de cierre",
-            "claimed": "2026-09-25",
-            "source": "2026-09-25",
+            "claimed": "2026-09-27",
+            "source": "2026-09-27",
             "status": "confirmed"
           },
           {
             "field": "publication_date",
             "label": "Fecha de publicación",
-            "claimed": "2026-08-16",
-            "source": "2026-08-16",
+            "claimed": "2026-08-18",
+            "source": "2026-08-18",
             "status": "confirmed"
           }
         ],
@@ -170,8 +174,8 @@
       "city": null,
       "object": "Compraventa de camioneta híbrida (MHEV) para supervisión de redes de energía",
       "estimated_value": 180000000,
-      "publication_date": "2026-08-16",
-      "closing_date": "2026-08-28",
+      "publication_date": "2026-08-18",
+      "closing_date": "2026-08-30",
       "days_to_close": 12,
       "foton_line": "PICKUP_MHEV",
       "line_confidence": 0.93,
@@ -193,6 +197,8 @@
         "pickup_mhev"
       ],
       "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO003",
+      "phase": "Presentación de oferta",
+      "procedure_status": "Convocado",
       "verification": {
         "ok": true,
         "checked": 5,
@@ -223,15 +229,15 @@
           {
             "field": "closing_date",
             "label": "Fecha de cierre",
-            "claimed": "2026-08-28",
-            "source": "2026-08-28",
+            "claimed": "2026-08-30",
+            "source": "2026-08-30",
             "status": "confirmed"
           },
           {
             "field": "publication_date",
             "label": "Fecha de publicación",
-            "claimed": "2026-08-16",
-            "source": "2026-08-16",
+            "claimed": "2026-08-18",
+            "source": "2026-08-18",
             "status": "confirmed"
           }
         ],
@@ -247,8 +253,8 @@
       "city": null,
       "object": "Suministro de furgón medicalizado y microbús para transporte de pacientes",
       "estimated_value": 240000000,
-      "publication_date": "2026-08-16",
-      "closing_date": "2026-09-03",
+      "publication_date": "2026-08-18",
+      "closing_date": "2026-09-05",
       "days_to_close": 18,
       "foton_line": "AUV_VAN",
       "line_confidence": 0.83,
@@ -270,6 +276,8 @@
         "repeated_buyer"
       ],
       "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO005",
+      "phase": "Presentación de oferta",
+      "procedure_status": "Convocado",
       "verification": {
         "ok": true,
         "checked": 5,
@@ -300,15 +308,15 @@
           {
             "field": "closing_date",
             "label": "Fecha de cierre",
-            "claimed": "2026-09-03",
-            "source": "2026-09-03",
+            "claimed": "2026-09-05",
+            "source": "2026-09-05",
             "status": "confirmed"
           },
           {
             "field": "publication_date",
             "label": "Fecha de publicación",
-            "claimed": "2026-08-16",
-            "source": "2026-08-16",
+            "claimed": "2026-08-18",
+            "source": "2026-08-18",
             "status": "confirmed"
           }
         ],
@@ -324,8 +332,8 @@
       "city": null,
       "object": "Adquisición de camión de estacas y volqueta para transporte de carga y residuos",
       "estimated_value": 380000000,
-      "publication_date": "2026-08-16",
-      "closing_date": "2026-09-10",
+      "publication_date": "2026-08-18",
+      "closing_date": "2026-09-12",
       "days_to_close": 25,
       "foton_line": "LDT",
       "line_confidence": 0.86,
@@ -343,6 +351,8 @@
         "high_value"
       ],
       "secop_link": "https://community.secop.gov.co/Public/Tendering/OpportunityDetail/Index?noticeUID=CO1.NTC.DEMO004",
+      "phase": "Presentación de oferta",
+      "procedure_status": "Convocado",
       "verification": {
         "ok": true,
         "checked": 5,
@@ -373,15 +383,15 @@
           {
             "field": "closing_date",
             "label": "Fecha de cierre",
-            "claimed": "2026-09-10",
-            "source": "2026-09-10",
+            "claimed": "2026-09-12",
+            "source": "2026-09-12",
             "status": "confirmed"
           },
           {
             "field": "publication_date",
             "label": "Fecha de publicación",
-            "claimed": "2026-08-16",
-            "source": "2026-08-16",
+            "claimed": "2026-08-18",
+            "source": "2026-08-18",
             "status": "confirmed"
           }
         ],

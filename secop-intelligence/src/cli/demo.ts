@@ -109,6 +109,8 @@ for (const s of SAMPLES) {
     scoring,
     alerts: [],
     secop_link: secopLink,
+    phase: 'Presentación de oferta',
+    procedure_status: 'Convocado',
     verification: verifyOpportunity(
       {
         notice_uid: s.notice_uid,

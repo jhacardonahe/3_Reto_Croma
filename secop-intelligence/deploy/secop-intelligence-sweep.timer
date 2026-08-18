@@ -1,0 +1,18 @@
+[Unit]
+Description=Latido del agente SECOP (barrido + aviso por Telegram)
+
+[Timer]
+# 11:00, 17:00 y 23:00 UTC = 06:00, 12:00 y 18:00 en Colombia (UTC-5, sin horario de verano).
+# Se fija en UTC a propósito: así el latido cae a la misma hora real sea cual sea la
+# zona horaria del VPS (los servidores suelen venir en UTC).
+# Tres latidos/día caben de sobra en el Default Bucket de Croma (compartido por toda la
+# organización) y dejan cuota para el tablero y el chat.
+OnCalendar=*-*-* 11,17,23:00:00 UTC
+# Si el VPS estaba apagado a la hora prevista, corre al volver.
+Persistent=true
+# Holgura para no pegarle a Croma justo en el arranque de la máquina.
+RandomizedDelaySec=120
+Unit=secop-intelligence-sweep.service
+
+[Install]
+WantedBy=timers.target

@@ -72,6 +72,10 @@
     .score { font-weight:700; }
     .s-hi { color:var(--ok); } .s-md { color:#e8c33e; } .s-lo { color:var(--mut); }
     .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; background:#22304f; color:var(--acc); margin:1px 3px 1px 0; }
+    /* Novedad frente a la memoria del agente (modules/seen.ts): lo que el bot ya contó por Telegram. */
+    .nov { display:inline-block; padding:1px 6px; border-radius:6px; font-size:10px; font-weight:700; letter-spacing:.4px; margin-top:4px; }
+    .nov.new { background:#0f3a29; color:var(--ok); }
+    .nov.changed { background:#3a3116; color:#f5c451; }
     .pill.hi { background:#3a1c22; color:var(--hi); }
     .spec { display:inline-block; padding:1px 6px; border-radius:6px; font-size:10px; background:#1c2745; color:#9fd0ff; margin:2px 3px 0 0; }
     .line { font-weight:600; color:var(--acc); }
@@ -341,12 +345,23 @@
       return p.toString();
     }
 
+    // Chip de novedad: 'new' = el agente aún no lo había visto nunca; 'changed' = cambió de
+    // fase/valor/cierre desde el último barrido. Lo calcula el servidor contra data/cache/seen.json.
+    function novChip(n) {
+      if (n === 'new') return '<br><span class="nov new">NUEVO</span>';
+      if (n === 'changed') return '<br><span class="nov changed">ACTUALIZADO</span>';
+      return '';
+    }
+
     function renderRows(d) {
-      $('meta').innerHTML = `Procesados <b>${d.total_processed}</b> · pre-filtrados <b>${d.total_filtered}</b> · detalles <b>${d.detail_lookups}</b> · oportunidades <b>${d.total_count}</b> · ${new Date(d.timestamp).toLocaleString('es-CO')}`;
+      const nuevas = d.opportunities.filter((o) => o.novelty === 'new').length;
+      const cambiadas = d.opportunities.filter((o) => o.novelty === 'changed').length;
+      const novTxt = (nuevas || cambiadas) ? ` · <b style="color:var(--ok)">${nuevas} nueva(s)</b>${cambiadas?` · <b style="color:#f5c451">${cambiadas} actualizada(s)</b>`:''}` : '';
+      $('meta').innerHTML = `Procesados <b>${d.total_processed}</b> · pre-filtrados <b>${d.total_filtered}</b> · detalles <b>${d.detail_lookups}</b> · oportunidades <b>${d.total_count}</b>${novTxt} · ${new Date(d.timestamp).toLocaleString('es-CO')}`;
       $('empty').style.display = d.opportunities.length ? 'none' : 'block';
       $('rows').innerHTML = d.opportunities.map((o) => `
         <tr>
-          <td class="score ${scoreClass(o.scoring.total)}">${o.scoring.total.toFixed(1)}</td>
+          <td class="score ${scoreClass(o.scoring.total)}">${o.scoring.total.toFixed(1)}${novChip(o.novelty)}</td>
           <td class="line">${o.foton_line}<br><span style="color:var(--mut);font-size:11px">${Math.round(o.line_confidence*100)}%</span></td>
           <td>${o.entity_name ?? '—'}<br><span style="color:var(--mut);font-size:11px">${o.entity_nit ?? ''}${o.department?` · ${o.department}`:''}</span></td>
           <td>${(o.object || '').slice(0,120)}${(o.specs&&o.specs.length)?`<br>${o.specs.map(x=>`<span class="spec">${x}</span>`).join('')}`:''}</td>

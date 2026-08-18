@@ -99,7 +99,7 @@ estrictamente más fuerte en el eje "no afirmar sin cita".
 
 Orden = impacto sobre los criterios ÷ esfuerzo. P0 son horas, no días.
 
-### P0-1 · Memoria de barrido + "novedades" (ataca: originalidad + impacto)
+### P0-1 · Memoria de barrido + "novedades" — ✅ IMPLEMENTADO 2026-08-18 (`src/modules/seen.ts`)
 El pipeline hoy no distingue lo nuevo de lo ya visto. Portar `detect.ts`:
 
 - `data/cache/seen.json`: `notice_uid → hash(estado|valor_estimado|fecha_cierre)`.
@@ -108,7 +108,7 @@ El pipeline hoy no distingue lo nuevo de lo ya visto. Portar `detect.ts`:
 
 Coste: ~80 líneas y un archivo JSON. Es el prerequisito de todo lo demás.
 
-### P0-2 · Heartbeat: que el sistema *inicie* (ataca: originalidad — su mayor ventaja)
+### P0-2 · Heartbeat: que el sistema *inicie* — ✅ IMPLEMENTADO 2026-08-18 (systemd timer + Telegram)
 No hace falta Cloudflare. Con la infra que ya está:
 
 - `deploy/secop-intelligence.timer` (systemd timer, cada 6h) → `npm run monitor` con la

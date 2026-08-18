@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { runMonitoring } from '../modules/monitoring.js';
+import { annotateNovelty, diffOpportunities, loadSeen } from '../modules/seen.js';
 import { analyzeCompetitor } from '../modules/competitive.js';
 import { analyzeMarket } from '../modules/market.js';
 import { analyzeRetrospective } from '../modules/retrospective.js';
@@ -13,6 +14,17 @@ function fail(res: Response, err: unknown): void {
   res.status(status >= 400 && status < 600 ? status : 500).json({
     error: err instanceof Error ? err.message : 'Error desconocido',
   });
+}
+
+/**
+ * Marca cada oportunidad como nueva / actualizada / conocida contra la memoria del
+ * agente. **Solo lectura**: el tablero no consume la novedad — únicamente el barrido
+ * (`npm run sweep`) escribe el mapa. Si no lo fuera, abrir el tablero silenciaría el
+ * aviso de Telegram que aún no ha salido.
+ */
+function withNovelty<T extends { opportunities: Parameters<typeof annotateNovelty>[0] }>(run: T): T {
+  annotateNovelty(run.opportunities, diffOpportunities(run.opportunities, loadSeen()).novelty);
+  return run;
 }
 
 export async function getHealth(_req: Request, res: Response): Promise<void> {
@@ -47,6 +59,8 @@ export async function getOpportunities(req: Request, res: Response): Promise<voi
       department: str(req.query.department) || undefined,
       keyword: str(req.query.keyword) || undefined,
     });
+
+    withNovelty(run);
 
     if (str(req.query.format) === 'csv') {
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -96,6 +110,7 @@ export async function streamOpportunities(req: Request, res: Response): Promise<
       keyword: str(req.query.keyword) || undefined,
       onEvent: (ev) => send('event', ev),
     });
+    withNovelty(run);
     send('done', {
       timestamp: run.timestamp,
       total_processed: run.total_processed,

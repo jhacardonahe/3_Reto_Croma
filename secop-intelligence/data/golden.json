@@ -78,6 +78,124 @@
       "expect_ok": false,
       "trap": true,
       "nota": "Control negativo: se afirma un valor sin nada en la evidencia de Croma."
+    },
+    {
+      "id": "mem-nueva",
+      "kind": "novelty",
+      "prev": null,
+      "curr": {
+        "phase": "Presentación de oferta",
+        "procedure_status": "Convocado",
+        "estimated_value": 500000000,
+        "closing_date": "2026-09-10",
+        "days_to_close": 20
+      },
+      "expect": "new",
+      "nota": "Nunca vista → el agente debe avisar."
+    },
+    {
+      "id": "mem-solo-pasa-el-tiempo",
+      "kind": "novelty",
+      "trap": true,
+      "prev": {
+        "phase": "Presentación de oferta",
+        "procedure_status": "Convocado",
+        "estimated_value": 500000000,
+        "closing_date": "2026-09-10",
+        "days_to_close": 20
+      },
+      "curr": {
+        "phase": "Presentación de oferta",
+        "procedure_status": "Convocado",
+        "estimated_value": 500000000,
+        "closing_date": "2026-09-10",
+        "days_to_close": 13
+      },
+      "expect": "known",
+      "nota": "TRAMPA: solo cambiaron los días para cierre (y con ellos el score). Si sale 'changed', el bot repite el mismo aviso cada latido."
+    },
+    {
+      "id": "mem-cambio-de-fase",
+      "kind": "novelty",
+      "prev": {
+        "phase": "Presentación de oferta",
+        "procedure_status": "Convocado",
+        "estimated_value": 500000000,
+        "closing_date": "2026-09-10",
+        "days_to_close": 20
+      },
+      "curr": {
+        "phase": "Adjudicación",
+        "procedure_status": "Adjudicado",
+        "estimated_value": 500000000,
+        "closing_date": "2026-09-10",
+        "days_to_close": -1
+      },
+      "expect": "changed",
+      "nota": "Convocatoria → adjudicado: es el momento con información nueva."
+    },
+    {
+      "id": "mem-cambio-de-valor",
+      "kind": "novelty",
+      "prev": {
+        "phase": "Presentación de oferta",
+        "procedure_status": "Convocado",
+        "estimated_value": 500000000,
+        "closing_date": "2026-09-10",
+        "days_to_close": 20
+      },
+      "curr": {
+        "phase": "Presentación de oferta",
+        "procedure_status": "Convocado",
+        "estimated_value": 720000000,
+        "closing_date": "2026-09-24",
+        "days_to_close": 34
+      },
+      "expect": "changed",
+      "nota": "La entidad corrigió presupuesto y cierre → vale la pena volver a mirar."
+    },
+    {
+      "id": "digest-silencio",
+      "kind": "digest",
+      "trap": true,
+      "states": [
+        "known",
+        "known"
+      ],
+      "expect_silence": true,
+      "nota": "TRAMPA: nada nuevo ⇒ el digest debe ser null. Un bot que habla sin novedad se silencia."
+    },
+    {
+      "id": "digest-lleva-la-cita",
+      "kind": "digest",
+      "states": [
+        "new",
+        "known"
+      ],
+      "expect_silence": false,
+      "expect_contains": [
+        "CO1.NTC.EVAL001",
+        "verificado",
+        "1 novedad"
+      ],
+      "nota": "Cada dato del mensaje viaja con su notice_uid y el chip del guard de citas."
+    },
+    {
+      "id": "digest-escapa-html",
+      "kind": "digest",
+      "trap": true,
+      "states": [
+        "new"
+      ],
+      "object": "Camioneta 4x4 <script>alert(1)</script> para la entidad",
+      "expect_silence": false,
+      "expect_contains": [
+        "&lt;script&gt;"
+      ],
+      "expect_absent": [
+        "<script>"
+      ],
+      "nota": "TRAMPA: el objeto viene de SECOP, no de nosotros. Sin escapar, Telegram rechaza el mensaje (o peor)."
     }
   ]
 }

@@ -35,6 +35,9 @@ CROMA_API_KEY="$(grep -E '^CROMA_API_KEY=' "$APP_SRC/.env" | head -1 | cut -d= -
 if [[ -z "${CROMA_API_KEY:-}" ]]; then echo "ERROR: CROMA_API_KEY vacía en .env" >&2; exit 1; fi
 # Key de respaldo (opcional): failover automático en 429. Se propaga al .env remoto si existe.
 CROMA_API_KEY_BACKUP="$(grep -E '^CROMA_API_KEY_BACKUP=' "$APP_SRC/.env" | head -1 | cut -d= -f2-)"
+# Canal del agente (opcional): si están, el latido avisa por Telegram; si no, solo escribe en disco.
+TELEGRAM_BOT_TOKEN="$(grep -E '^TELEGRAM_BOT_TOKEN=' "$APP_SRC/.env" | head -1 | cut -d= -f2-)"
+TELEGRAM_CHAT_ID="$(grep -E '^TELEGRAM_CHAT_ID=' "$APP_SRC/.env" | head -1 | cut -d= -f2-)"
 
 echo "==> [3/7] Asegurando Node 18+ en el VPS ..."
 $SSH "$REMOTE" 'bash -s' <<'REMOTE_SETUP'
@@ -62,6 +65,9 @@ CROMA_BASE_URL=https://api.croma.run
 PORT=$PORT
 CROMA_MAX_CALLS_PER_MIN=10
 CACHE_TTL_HOURS=6
+PUBLIC_BASE_URL=https://$DOMAIN
+TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN
+TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID
 ENVEOF
 
 $SSH "$REMOTE" "bash -s" <<REMOTE_BUILD
@@ -74,6 +80,10 @@ REMOTE_BUILD
 
 echo "==> [6/7] Instalando servicio systemd + nginx ..."
 $SSH "$REMOTE" "install -m 644 $APPDIR/deploy/secop-intelligence.service /etc/systemd/system/secop-intelligence.service && systemctl daemon-reload && systemctl enable --now secop-intelligence && systemctl restart secop-intelligence"
+
+# Latido del agente: unidad oneshot + timer (06/12/18 hora Colombia). El timer es lo que
+# convierte el sistema en un agente que INICIA, en vez de esperar a que alguien abra el tablero.
+$SSH "$REMOTE" "install -m 644 $APPDIR/deploy/secop-intelligence-sweep.service /etc/systemd/system/secop-intelligence-sweep.service && install -m 644 $APPDIR/deploy/secop-intelligence-sweep.timer /etc/systemd/system/secop-intelligence-sweep.timer && systemctl daemon-reload && systemctl enable --now secop-intelligence-sweep.timer && systemctl list-timers --no-pager secop-intelligence-sweep.timer | head -3"
 
 $SSH "$REMOTE" "bash -s" <<REMOTE_NGINX
 set -e

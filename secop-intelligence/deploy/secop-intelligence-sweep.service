@@ -1,0 +1,17 @@
+[Unit]
+Description=SECOP Intelligence — barrido (latido del agente)
+Documentation=https://github.com/jhacardonahe/3_Reto_Croma
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# oneshot: corre, notifica y sale. El .timer decide cuándo.
+Type=oneshot
+WorkingDirectory=/opt/secop-intelligence
+EnvironmentFile=/opt/secop-intelligence/.env
+ExecStart=/usr/bin/node /opt/secop-intelligence/dist/cli/sweep.js
+# Un barrido en frío puede tardar por el rate-limit de Croma; no lo matamos antes de tiempo.
+TimeoutStartSec=1800
+# Endurecimiento básico (igual que el servicio web)
+NoNewPrivileges=true
+ProtectSystem=full

@@ -1,0 +1,378 @@
+{
+  "id": "secopAsesorTelegram01",
+  "name": "SECOP Asesor Comercial (Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "telegram-trigger",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "secop-asesor-telegram",
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZA",
+          "name": "Telegram account (bot de BotFather)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "allowlist",
+              "leftValue": "={{ ['REEMPLAZA_CON_TU_CHAT_ID'].includes(String($json.message.chat.id)) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "allowlist",
+      "name": "¿Chat autorizado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "Eres el **Asesor Comercial SECOP–Foton**, copiloto de los KAM de LDT Colombia (distribuidor Foton). Ayudas a detectar y priorizar oportunidades de compra pública de vehículos, analizar la competencia y hacer seguimiento a contratos.\n\nHerramientas disponibles:\n- `buscar_oportunidades`: oportunidades de SECOP clasificadas por línea Foton (segmento) y priorizadas por score. Filtros: segmento, departamento, palabra clave, NITs, fecha desde, límite.\n- `analizar_competidor`: historial de contratación pública de un competidor por NIT (contratos, valor total, por línea, entidades top, tendencia).\n- `seguimiento_contrato`: estado y salud de un contrato por su ID (CO1.PCCNTR....).\n\nReglas:\n- Responde SIEMPRE en español, claro y orientado a la acción comercial.\n- Usa las herramientas para responder con DATOS REALES. NUNCA inventes NITs, cifras, notice_uid ni IDs de contrato.\n- Al listar oportunidades resalta: score, línea Foton, entidad, valor estimado (COP) y días al cierre; termina con el siguiente paso sugerido para el KAM.\n- Si falta un dato para usar una herramienta (NIT del competidor, ID de contrato), pídelo con un ejemplo del formato.\n- Cifras en pesos colombianos.\n\nLíneas Foton (segmentos válidos): NEW_ENERGY_PICKUP, PICKUP_MHEV, PICKUP, NEW_ENERGY, AUV_VAN, LDT, HDT, SPECIAL.\n\nIMPORTANTE al llamar `buscar_oportunidades`: incluye SIEMPRE las 5 propiedades del JSON (segment, department, keyword, entity_nits, from_date). Usa cadena vacía \"\" en las que no quieras filtrar; NUNCA omitas una propiedad.\n\nCANAL: Telegram. El KAM te escribe desde el móvil.\n- Respuestas CORTAS (máx. ~8 líneas). Si hay más, ofrece el tablero: https://autodata.jyrmecatronica.com\n- Formato: texto plano con etiquetas HTML de Telegram (<b>, <i>, <code>, <a href>). NUNCA uses Markdown (*, #, ```): Telegram lo rechaza en modo HTML.\n- Al citar una oportunidad incluye SIEMPRE su notice_uid entre <code></code>: es la fuente verificable en Croma.\n- El agente ya avisa solo por este mismo chat cuando aparecen novedades (barrido automático 06/12/18). Si preguntan '¿qué hay de nuevo?', usa buscar_oportunidades."
+        }
+      },
+      "id": "asesor",
+      "name": "Asesor Comercial",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "id": "openai-model",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        360,
+        260
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "IDpFYmuewz0FZ8WE",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "contextWindowLength": 12
+      },
+      "id": "memoria",
+      "name": "Memoria",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        540,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca oportunidades de compra pública de vehículos en SECOP, clasificadas por línea Foton (segmento) y priorizadas por score (0-100). Úsala para cualquier pregunta sobre oportunidades o licitaciones. Todos los filtros son opcionales.",
+        "method": "GET",
+        "url": "https://autodata.jyrmecatronica.com/api/opportunities",
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "segment",
+              "value": "={{ $fromAI('segment', 'Línea Foton exacta: NEW_ENERGY_PICKUP, PICKUP_MHEV, PICKUP, NEW_ENERGY, AUV_VAN, LDT, HDT o SPECIAL. Vacío si no aplica.', 'string') }}"
+            },
+            {
+              "name": "department",
+              "value": "={{ $fromAI('department', 'Departamento o ciudad de la entidad (ej. Antioquia, Bogotá). Vacío si no aplica.', 'string') }}"
+            },
+            {
+              "name": "keyword",
+              "value": "={{ $fromAI('keyword', 'Palabra clave en el objeto del proceso (ej. híbrida, blindada, doble cabina). Vacío si no aplica.', 'string') }}"
+            },
+            {
+              "name": "entity_nits",
+              "value": "={{ $fromAI('entity_nits', 'NITs de entidades separados por coma. Vacío para usar las configuradas.', 'string') }}"
+            },
+            {
+              "name": "from_date",
+              "value": "={{ $fromAI('from_date', 'Fecha desde en formato yyyy-mm-dd. Vacío si no aplica.', 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tool-opps",
+      "name": "buscar_oportunidades",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        720,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Analiza el historial de contratación pública de un competidor por su NIT: contratos ganados, valor total, desglose por categoría (línea Foton), entidades top, tendencia y lista de contratos con cantidad/precio unitario estimados. Filtros opcionales: categoría, entidad contratante, palabra clave, valor mínimo y período.",
+        "method": "POST",
+        "url": "https://autodata.jyrmecatronica.com/api/competitor-analysis",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "keypair",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "competitor_nit",
+              "value": "={{ $fromAI('competitor_nit', 'NIT del competidor, solo dígitos (ej. 860034604 = AUTOMAYOR S.A.).', 'string') }}"
+            },
+            {
+              "name": "line",
+              "value": "={{ $fromAI('line', 'Categoría/línea Foton exacta para filtrar: NEW_ENERGY_PICKUP, PICKUP_MHEV, PICKUP, NEW_ENERGY, AUV_VAN, LDT, HDT o SPECIAL. Vacío si no aplica.', 'string') }}"
+            },
+            {
+              "name": "entity_nit",
+              "value": "={{ $fromAI('entity_nit', 'NIT de la entidad contratante para filtrar. Vacío si no aplica.', 'string') }}"
+            },
+            {
+              "name": "keyword",
+              "value": "={{ $fromAI('keyword', 'Palabra clave en el objeto del contrato (ej. blindada, híbrida). Vacío si no aplica.', 'string') }}"
+            },
+            {
+              "name": "min_value",
+              "value": "={{ $fromAI('min_value', 'Valor mínimo del contrato en COP (solo número). Vacío si no aplica.', 'string') }}"
+            },
+            {
+              "name": "from_date",
+              "value": "={{ $fromAI('from_date_comp', 'Fecha desde yyyy-mm-dd. Vacío si no aplica.', 'string') }}"
+            },
+            {
+              "name": "to_date",
+              "value": "={{ $fromAI('to_date_comp', 'Fecha hasta yyyy-mm-dd. Vacío si no aplica.', 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "tool-comp",
+      "name": "analizar_competidor",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        900,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "toolDescription": "Consulta el estado y la salud de un contrato SECOP por su ID (formato CO1.PCCNTR.####): estado de ejecución, garantías, adiciones, retrasos y health score. Úsala cuando pregunten por el seguimiento de un contrato.",
+        "method": "GET",
+        "url": "=https://autodata.jyrmecatronica.com/api/contracts/{{ $fromAI('contract_id', 'ID del contrato, formato CO1.PCCNTR.#### (ej. CO1.PCCNTR.9547105).', 'string') }}/tracking",
+        "options": {}
+      },
+      "id": "tool-track",
+      "name": "seguimiento_contrato",
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        1080,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "telegram-reply",
+      "name": "Responder por Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        860,
+        0
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZA",
+          "name": "Telegram account (bot de BotFather)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Este asistente es privado. Pide acceso al administrador e indícale tu chat id: <code>{{ $('Telegram Trigger').item.json.message.chat.id }}</code>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "telegram-rechazo",
+      "name": "Rechazar (no autorizado)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "REEMPLAZA",
+          "name": "Telegram account (bot de BotFather)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "¿Chat autorizado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Chat autorizado?": {
+      "main": [
+        [
+          {
+            "node": "Asesor Comercial",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rechazar (no autorizado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asesor Comercial": {
+      "main": [
+        [
+          {
+            "node": "Responder por Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Asesor Comercial",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria": {
+      "ai_memory": [
+        [
+          {
+            "node": "Asesor Comercial",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar_oportunidades": {
+      "ai_tool": [
+        [
+          {
+            "node": "Asesor Comercial",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "analizar_competidor": {
+      "ai_tool": [
+        [
+          {
+            "node": "Asesor Comercial",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "seguimiento_contrato": {
+      "ai_tool": [
+        [
+          {
+            "node": "Asesor Comercial",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}

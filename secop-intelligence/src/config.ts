@@ -34,6 +34,33 @@ export const config = {
   maxCallsPerMin: Number(process.env.CROMA_MAX_CALLS_PER_MIN ?? 10),
   cacheTtlHours: Number(process.env.CACHE_TTL_HOURS ?? 6),
   cacheDir: resolve(dataDir, 'cache'),
+
+  /** URL pública del tablero (botón del mensaje de Telegram). Vacío ⇒ sin botón. */
+  publicBaseUrl: (process.env.PUBLIC_BASE_URL ?? '').replace(/\/$/, ''),
+
+  /**
+   * Canal de Telegram del agente. El token sale de @BotFather y el chat_id del chat
+   * o grupo destino. Vacíos ⇒ el barrido corre igual y solo escribe en disco/log:
+   * notificar es un extra, nunca un requisito para que el pipeline funcione.
+   */
+  telegram: {
+    token: process.env.TELEGRAM_BOT_TOKEN ?? '',
+    chatId: process.env.TELEGRAM_CHAT_ID ?? '',
+  },
+
+  /**
+   * Sobre del barrido programado (el latido). Deliberadamente conservador: el Default
+   * Bucket de Croma es compartido por toda la organización, así que 4 corridas/día con
+   * este tope caben de sobra y dejan cuota para el tablero y el chat.
+   */
+  sweep: {
+    windowDays: Number(process.env.SWEEP_WINDOW_DAYS ?? 7),
+    maxDetailLookups: Number(process.env.SWEEP_MAX_DETAIL ?? 40),
+    concurrency: Number(process.env.SWEEP_CONCURRENCY ?? 3),
+    minScore: Number(process.env.SWEEP_MIN_SCORE ?? 40),
+    /** Cuántas novedades se detallan en el mensaje; el resto va como "…y N más". */
+    digestLimit: Number(process.env.SWEEP_DIGEST_LIMIT ?? 5),
+  },
 };
 
 export const entities: EntityConfig[] = loadJson<{ entities: EntityConfig[] }>('entities.json').entities;

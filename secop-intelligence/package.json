@@ -9,6 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "monitor": "tsx src/cli/monitor.ts",
+    "sweep": "tsx src/cli/sweep.ts",
     "retro": "tsx src/cli/retrospective.ts",
     "demo": "tsx src/cli/demo.ts",
     "eval": "tsx src/cli/eval.ts",

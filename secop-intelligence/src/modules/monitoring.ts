@@ -165,6 +165,9 @@ export async function runMonitoring(opts: MonitorOptions = {}): Promise<MonitorR
       scoring,
       alerts: [],
       secop_link: cand.summary.url ?? header?.url ?? null,
+      // Crudos de Croma: alimentan la huella de la memoria de barrido (modules/seen.ts).
+      phase: cand.summary.phase ?? null,
+      procedure_status: cand.summary.procedure_status ?? null,
       // Guard de citas: se calcula aquí, donde vive la evidencia cruda de Croma
       // (summary + header). Traza cada dato afirmado a su origen antes de emitir.
       verification: verifyOpportunity(
